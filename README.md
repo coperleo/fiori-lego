@@ -15,4 +15,4 @@ Esperienza 3D interattiva in stile **LEGO Video Game & Manuale di Montaggio** de
 - **Coreografia "Brick Smash & Build"** allo scroll: il modello parte montato, si scompone a terra cadendo a pezzi come nei videogiochi LEGO, e si ricostruisce pezzo dopo pezzo seguendo i passi del manuale di montaggio.
 - **Visione Raggi X** sulle pareti del vaso per osservare l'incastro interno del nucleo SNOT.
 - **Configuratore Colori Fiori Live** (solo i fiori cambiano colore, preservando gli steli verdi e la struttura del vaso).
-- **Free Play 360°**, **Confronto Scala Reale 1:1** (mattoncini LEGO reali affiancati al modello gigante) ed **Easter Egg** nascosti (Minikit segreto, Stud Counter & True Builder 100%, SFX audio sintetizzati).
+- **Free Play 360°**, **Confronto Scala Reale 1:1** (mattoncini LEGO reali affiancati al modello gigante) ed **Easter Egg** nascosti (Minikit segreto, Stud Counter & True Builder 100%).

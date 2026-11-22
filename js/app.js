@@ -5,7 +5,7 @@
  * - Live Flower Color Customizer (ONLY flowers change color; stems stay green & pots keep CAD colors!)
  * - Click any 3D flower to paint it! + Presets + Secret 24K Gold unlock via hidden Minikit Easter Egg!
  * - Zero-glitch X-Ray (independent cloned materials + mat.needsUpdate = true + EdgesGeometry)
- * - De-overlapped 3D hotspot pins with SVG leader lines + Web Audio synthesized LEGO brick SFX
+ * - De-overlapped 3D hotspot pins with SVG leader lines
  */
 
 import * as THREE from 'three';
@@ -241,69 +241,7 @@ const CHAPTER_HUD = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. WEB AUDIO PROCEDURAL LEGO BRICK SFX (Clacks, Stud Chimes, Smash, Fanfare)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const sfx = {
-  enabled: false,
-  ctx: null,
-  ensure() {
-    if (!this.enabled) return null;
-    if (!this.ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) this.ctx = new AC();
-    }
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-    return this.ctx;
-  },
-  clack(pitch = 1.0) {
-    const c = this.ensure();
-    if (!c) return;
-    const now = c.currentTime;
-    const osc = c.createOscillator();
-    const gain = c.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(520 * pitch, now);
-    osc.frequency.exponentialRampToValueAtTime(160 * pitch, now + 0.045);
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
-    osc.connect(gain).connect(c.destination);
-    osc.start(now);
-    osc.stop(now + 0.06);
-  },
-  stud(freq = 1046) {
-    const c = this.ensure();
-    if (!c) return;
-    const now = c.currentTime;
-    const osc = c.createOscillator();
-    const gain = c.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.setValueAtTime(freq * 1.25, now + 0.045);
-    gain.gain.setValueAtTime(0.09, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    osc.connect(gain).connect(c.destination);
-    osc.start(now);
-    osc.stop(now + 0.17);
-  },
-  smash() {
-    const c = this.ensure();
-    if (!c) return;
-    for (let i = 0; i < 6; i++) {
-      setTimeout(() => this.clack(0.75 + Math.random() * 0.7), i * 32);
-    }
-  },
-  fanfare() {
-    const c = this.ensure();
-    if (!c) return;
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
-      setTimeout(() => this.stud(f), idx * 95);
-    });
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. THREE.JS STUDIO SETUP
+// 4. THREE.JS STUDIO SETUP
 // ─────────────────────────────────────────────────────────────────────────────
 
 const canvas = document.getElementById('webgl-canvas');
@@ -531,7 +469,7 @@ function showToast(icon, title, sub) {
   toastTimer = setTimeout(() => gameToast.classList.remove('show'), 3200);
 }
 
-function awardStuds(amount, playSound = true) {
+function awardStuds(amount) {
   state.studs += amount;
   studScoreEl.textContent = state.studs.toLocaleString('it-IT');
   studHudBtn.classList.remove('pulse');
@@ -539,7 +477,6 @@ function awardStuds(amount, playSound = true) {
   studHudBtn.classList.add('pulse');
   const pct = Math.min(100, Math.round((state.studs / 10000) * 100));
   trueBuilderFill.style.width = `${Math.max(12, pct)}%`;
-  if (playSound) sfx.stud(amount >= 1000 ? 1318 : 988);
 }
 
 function applyFlowerColor(slotIndex, hex, opts = null) {
@@ -570,8 +507,7 @@ function applyPalette(paletteKey) {
   document.querySelectorAll('.qcb-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.palette === paletteKey);
   });
-  sfx.clack(1.15);
-  awardStuds(50, false);
+  awardStuds(50);
 }
 
 const flowerDotsWrap = document.getElementById('flower-dots');
@@ -597,8 +533,7 @@ function cycleFlowerSlot(slotIndex) {
   const curIdx = pool.findIndex((c) => c.hex.toUpperCase() === cur);
   const next = pool[(curIdx + 1) % pool.length];
   applyFlowerColor(slotIndex, next.hex, next);
-  sfx.clack(1.0 + slotIndex * 0.08);
-  awardStuds(25, false);
+  awardStuds(25);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -881,7 +816,7 @@ function setActiveChapterUI(chIdx) {
   state.activeChapter = chIdx;
   if (chIdx > state.maxChapterReached) {
     state.maxChapterReached = chIdx;
-    awardStuds(chIdx === 10 ? 1500 : 850, chIdx > 0);
+    awardStuds(chIdx === 10 ? 1500 : 850);
     if (chIdx === 6) {
       showToast('🌼', 'COSTRUZIONE COMPLETATA!', '+850 Stud · Tutti i 6 fiori incastrati!');
     }
@@ -890,9 +825,6 @@ function setActiveChapterUI(chIdx) {
   // Trigger Brick Smash particle burst when entering Chapter 1!
   if (chIdx === 1 && state.lastSmashChapter !== 1) {
     spawnStudBurst(22, 1.9, 2.8, false);
-    sfx.smash();
-  } else if (chIdx >= 2 && chIdx <= 6 && chIdx > state.lastSmashChapter) {
-    sfx.clack(0.9 + chIdx * 0.08);
   }
   state.lastSmashChapter = chIdx;
 
@@ -1103,7 +1035,6 @@ function openDrawer(h) {
   drawerSpecs.innerHTML = h.specs.map(([k, v]) => `<div class="drawer-spec-row"><span>${k}</span><strong>${v}</strong></div>`).join('');
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
-  sfx.clack(1.25);
 }
 
 function closeDrawer() {
@@ -1271,7 +1202,6 @@ function switchVariation(vKey, animateCamera = true) {
   refreshFlowerDotButtons();
 
   if (animateCamera) {
-    sfx.clack(1.1);
     const ty = vKey === 'v1' ? 1.95 : (vKey === 'v2' ? 1.35 : 0.95);
     const dist = vKey === 'v1' ? 7.2 : (vKey === 'v2' ? 5.2 : 4.5);
     gsap.to(controls.target, { x: 0, y: ty, z: 0, duration: 0.65, ease: 'power2.out' });
@@ -1322,9 +1252,8 @@ function syncInspectorUI() {
 }
 
 function triggerSmashAndRebuild() {
-  sfx.smash();
   spawnStudBurst(28, 1.8, 3.0, goldUnlocked);
-  awardStuds(500, false);
+  awardStuds(500);
   showToast('💥', 'BRICK SMASH!', 'Ricostruzione automatica in corso…');
   const proxy = { v: 1 };
   gsap.to(proxy, {
@@ -1347,7 +1276,6 @@ function triggerSmashAndRebuild() {
           sliderBuild.value = Math.round(proxy.v * 100);
           valBuild.textContent = `${sliderBuild.value}%`;
         },
-        onComplete: () => sfx.fanfare(),
       });
     },
   });
@@ -1362,19 +1290,6 @@ function setupUIControls() {
   // Shuffle Flowers buttons inside story cards
   document.querySelectorAll('.btn-shuffle-flowers').forEach((btn) => {
     btn.addEventListener('click', () => applyPalette('random'));
-  });
-
-  // SFX Toggle
-  const btnSfx = document.getElementById('btn-sfx');
-  const sfxIcon = document.getElementById('sfx-icon');
-  btnSfx.addEventListener('click', () => {
-    sfx.enabled = !sfx.enabled;
-    btnSfx.setAttribute('aria-pressed', String(sfx.enabled));
-    sfxIcon.textContent = sfx.enabled ? '🔊' : '🔇';
-    if (sfx.enabled) {
-      sfx.fanfare();
-      showToast('🔊', 'AUDIO LEGO ATTIVO', 'Ora senti i click dei mattoncini e gli stud!');
-    }
   });
 
   // Variation Selector in Free Play
@@ -1404,14 +1319,12 @@ function setupUIControls() {
     gsap.to(state, { xray: next, duration: 0.45 });
     btnXray.setAttribute('aria-pressed', String(next > 0.5));
     btnXray.classList.toggle('active', next > 0.5);
-    sfx.clack(0.95);
   });
 
   btnScale.addEventListener('click', () => {
     state.showScaleRef = !state.showScaleRef;
     btnScale.setAttribute('aria-pressed', String(state.showScaleRef));
     btnScale.classList.toggle('active', state.showScaleRef);
-    sfx.clack(1.2);
     if (state.showScaleRef) {
       showToast('📏', 'SCALA REALE 1:1', 'Guarda la pila di mattoncini LEGO reali alla base!');
     }
@@ -1454,13 +1367,12 @@ function setupUIControls() {
   let studClickTimer = null;
   studHudBtn.addEventListener('click', () => {
     studClicks++;
-    awardStuds(100, true);
+    awardStuds(100);
     clearTimeout(studClickTimer);
     studClickTimer = setTimeout(() => { studClicks = 0; }, 2200);
     if (studClicks >= 5) {
       studClicks = 0;
-      awardStuds(5000, false);
-      sfx.fanfare();
+      awardStuds(5000);
       spawnStudBurst(40, 2.2, 3.6, true);
       applyPalette('rainbow');
       showToast('🏆', 'TRUE BUILDER 100%!', 'Easter Egg scoperto! Pioggia di stud viola + Rainbow!');
@@ -1532,8 +1444,7 @@ function setupRaycastInteractions() {
       goldUnlocked = true;
       minikitBadge.textContent = 'MK 1/1 ★';
       minikitBadge.classList.add('found');
-      awardStuds(10000, false);
-      sfx.fanfare();
+      awardStuds(10000);
       spawnStudBurst(45, 1.2, 3.8, true);
       applyPalette('gold');
       showToast('✨', 'MINIKIT SEGRETO 1/1!', 'Sbloccata finitura ORO 24K per i tuoi fiori!');
