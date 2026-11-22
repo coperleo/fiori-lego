@@ -100,10 +100,6 @@
   <div class="stage-wrap" id="stage-wrap">
     <canvas id="webgl-canvas"></canvas>
 
-    <!-- SVG Leader Lines + 3D Hotspot Pins (De-Overlapped) -->
-    <svg id="leader-svg" class="leader-svg" aria-hidden="true"></svg>
-    <div id="hotspots-layer" class="hotspots-layer"></div>
-
     <!-- Floating Instruction HUD Pill (Top-Center during build chapters) -->
     <div id="build-hud" class="build-hud hidden">
       <span class="build-hud-step" id="build-hud-step">STEP 1/12</span>
@@ -178,23 +174,12 @@
           <button type="button" id="btn-smash" class="dock-btn dock-btn-red" title="Scomponi e ricostruisci come un gioco LEGO!">💥 Smash!</button>
           <button type="button" id="btn-xray" class="dock-btn" aria-pressed="false">🩻 Raggi X</button>
           <button type="button" id="btn-scale" class="dock-btn" aria-pressed="false" title="Affianca mattoncini LEGO reali in scala 1:1">📏 Scala 1:1</button>
-          <button type="button" id="btn-pins" class="dock-btn active" aria-pressed="true">🏷️ Pezzi</button>
           <button type="button" id="btn-spin" class="dock-btn" aria-pressed="false">🔄 360°</button>
           <button type="button" id="btn-reset" class="dock-btn" title="Ripristina vista">↺</button>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- SLIDE-OUT COMPONENT SPEC DRAWER -->
-  <aside id="component-drawer" class="component-drawer" aria-hidden="true">
-    <button type="button" id="drawer-close" class="drawer-close" aria-label="Chiudi scheda">✕</button>
-    <div class="drawer-badge" id="drawer-badge">PEZZO 3D</div>
-    <h3 class="drawer-title" id="drawer-title">Titolo Pezzo</h3>
-    <p class="drawer-subtitle" id="drawer-subtitle">Sottotitolo tecnico</p>
-    <p class="drawer-desc" id="drawer-desc"></p>
-    <div class="drawer-specs" id="drawer-specs"></div>
-  </aside>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        SCROLLYTELLING CHAPTERS (0 -> 10)
@@ -699,6 +684,6 @@
   <!-- GSAP + ScrollTrigger -->
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=2"></script>
+  <script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>

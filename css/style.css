@@ -404,64 +404,6 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.35);
 }
 
-/* ── SVG LEADER LINES & DE-OVERLAPPED 3D HOTSPOTS ────────────────────────── */
-.leader-svg {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 180;
-}
-.hotspots-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 190;
-}
-.hotspot-pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 11px 5px 6px;
-  border-radius: 999px;
-  background: rgba(15, 20, 32, 0.92);
-  border: 1.5px solid rgba(255, 213, 0, 0.65);
-  color: #fff;
-  font-family: var(--font-body);
-  font-size: 0.76rem;
-  font-weight: 600;
-  white-space: nowrap;
-  pointer-events: auto;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-  transition: opacity 0.22s ease, border-color 0.2s, background 0.2s;
-}
-.hotspot-pin:hover, .hotspot-pin.active {
-  background: var(--lego-yellow);
-  color: #101420;
-  border-color: #fff;
-}
-.hotspot-pin.hidden-pin { opacity: 0; pointer-events: none; }
-.hotspot-num {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--lego-yellow);
-  color: #101420;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-.hotspot-pin:hover .hotspot-num, .hotspot-pin.active .hotspot-num {
-  background: #101420;
-  color: var(--lego-yellow);
-}
-
 /* ── FREE PLAY INSPECTOR DOCK ────────────────────────────────────────────── */
 .inspector-dock {
   position: fixed;
@@ -598,72 +540,6 @@ body {
   box-shadow: inset 0 -3px 0 var(--lego-red-dark);
 }
 .dock-btn-red:hover { background: #f23535; }
-
-/* ── SLIDE-OUT COMPONENT DRAWER ──────────────────────────────────────────── */
-.component-drawer {
-  position: fixed;
-  top: 78px;
-  right: 18px;
-  width: min(350px, calc(100vw - 36px));
-  z-index: 450;
-  padding: 22px;
-  border-radius: 18px;
-  background: rgba(16, 20, 32, 0.96);
-  backdrop-filter: blur(18px);
-  border: 2px solid var(--lego-yellow);
-  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.65);
-  transform: translateX(120%);
-  opacity: 0;
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s;
-}
-.component-drawer.open { transform: translateX(0); opacity: 1; }
-.drawer-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  cursor: pointer;
-}
-.drawer-badge {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--lego-yellow);
-  letter-spacing: 0.08em;
-}
-.drawer-title {
-  margin: 6px 0 4px;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-}
-.drawer-subtitle {
-  margin: 0 0 12px;
-  font-size: 0.82rem;
-  color: #8cc5ff;
-}
-.drawer-desc {
-  margin: 0 0 14px;
-  font-size: 0.88rem;
-  line-height: 1.55;
-  color: var(--text-dim);
-}
-.drawer-specs { display: flex; flex-direction: column; gap: 7px; }
-.drawer-spec-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  font-size: 0.78rem;
-}
-.drawer-spec-row span { color: var(--text-dim); }
-.drawer-spec-row strong { color: #fff; font-family: var(--font-mono); font-size: 0.74rem; }
 
 /* ── SCROLLYTELLING CHAPTERS & LEGO MANUAL CARDS ─────────────────────────── */
 .scroll-story {

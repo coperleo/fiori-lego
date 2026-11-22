@@ -120,111 +120,8 @@ const EXPLODE_V3 = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. HOTSPOTS METADATA (Click any label to inspect piece CAD specs!)
+// 3. CHAPTER HUD METADATA
 // ─────────────────────────────────────────────────────────────────────────────
-
-const HOTSPOTS = [
-  {
-    id: 'v1_quattro', num: 1, varId: 'v1',
-    label: 'Nucleo SNOT 1×1', badge: 'STEP 01 · FONDAZIONE',
-    title: 'Cubo Nero SNOT 1×1 Gigante',
-    subtitle: '112 × 112 × 112 mm · 5 Punti di Incastro',
-    desc: 'Ispirato al leggendario "Travis Brick" LEGO con stud su 4 facce laterali e sulla sommità. Tiene solidali le 4 pareti a doghe senza colla.',
-    specs: [['Dimensioni', '112 × 112 × 112 mm'], ['Materiale', 'PLA Nero Opaco'], ['Perni', '4 laterali + 1 superiore']],
-  },
-  {
-    id: 'v1_dot', num: 2, varId: 'v1',
-    label: 'Piastra Tonda', badge: 'STEP 02 · DISTANZIALE',
-    title: 'Piastra Tonda 1×1 (dot)',
-    subtitle: 'Ø 80 mm × 48 mm · PLA Tan',
-    desc: 'Si incastra sul perno superiore del cubo SNOT e funge da distanziale calibrato per portare lo stelo verde all’altezza esatta del bordo.',
-    specs: [['Diametro', '80 mm'], ['Altezza', '48 mm'], ['Materiale', 'PLA Sand / Tan']],
-  },
-  {
-    id: 'v1_dot_fl', num: 3, varId: 'v1',
-    label: 'Connettore Fiore', badge: 'STEP 03 · ADATTATORE',
-    title: 'Corolla Connettore (dot_fl)',
-    subtitle: 'Ø 79.2 mm × 48 mm · PLA Verde',
-    desc: 'Piastra sagomata a fiore che blocca assialmente la base dello stelo inferiore dentro la fioriera a doghe.',
-    specs: [['Diametro', '79.2 mm'], ['Incastro', 'A pressione calibrata'], ['Materiale', 'PLA Verde Botanico']],
-  },
-  {
-    id: 'v1_lastra_s', num: 4, varId: 'v1',
-    label: '4× Pareti a Doghe', badge: 'STEP 04 · FIORIERA',
-    title: 'Pannello Scanalato a Doghe (×4)',
-    subtitle: '80 × 32 × 160 mm · Stampa Piana',
-    desc: 'Quattro pannelli identici stampabili in piano senza supporti. La nervatura posteriore si blocca esattamente sui perni laterali del cubo nero.',
-    specs: [['Quantità', '4× pezzi identici'], ['Dimensioni', '80 × 32 × 160 mm'], ['Materiale', 'PLA Sand / Tan']],
-  },
-  {
-    id: 'v1_pianta_low', num: 5, varId: 'v1',
-    label: 'Stelo Inferiore', badge: 'STEP 05 · BOTANICA',
-    title: 'Stelo a 3 Rami (Livello 1)',
-    subtitle: '188 × 156 × 199 mm · Verde Fisso',
-    desc: 'Riproduzione in scala 10× dello storico stelo botanico a 3 ramificazioni inclinate. Progettato con perno superiore per impilare altri steli.',
-    specs: [['Altezza', '199.4 mm'], ['Rami', '3× inclinati a 120°'], ['Materiale', 'PLA Verde Botanico']],
-  },
-  {
-    id: 'v1_pianta_high', num: 6, varId: 'v1',
-    label: 'Stelo Superiore (+60°)', badge: 'STEP 06 · IMPILABILE',
-    title: 'Stelo a 3 Rami (Livello 2)',
-    subtitle: 'Sfalsato di 60° · +64 mm in quota',
-    desc: 'Si impila sul perno del primo stelo ruotato di 60°: i 6 rami risultanti non si toccano mai e formano un bouquet tridimensionale alto 45 cm.',
-    specs: [['Offset Quota', '+64.0 mm'], ['Rotazione', '60° esatti'], ['Altezza Totale', '~450 mm']],
-  },
-  {
-    id: 'v1_fiore_5', num: 7, varId: 'v1',
-    label: '6× Fiori Colorabili', badge: 'STEP 07–12 · PETALI',
-    title: 'Fiore Gigante 5 Petali (×6)',
-    subtitle: 'Ø 88 mm × 53.5 mm · Mix & Match',
-    desc: 'Ogni fiore si infila a pressione sulla punta arrotondata del ramo verde, lasciando spuntare il bottone centrale verde proprio come nei set classici!',
-    specs: [['Diametro', '88.2 mm'], ['Colorazione', 'Personalizzabile live'], ['Stampa', 'Rapida, senza supporti']],
-  },
-  {
-    id: 'v2_vaso', num: 8, varId: 'v2',
-    label: 'Vaso Alternativo', badge: 'VARIAZIONE 2 · MONOBLOCCO',
-    title: 'Vasetto Bianco Troncoconico',
-    subtitle: 'Ø 93 mm × 80 mm · Pezzo Unico',
-    desc: 'Alternativa minimalista al vaso a mattoncini: stampabile in un solo blocco con sede cilindrica interna calibrata per lo stelo verde.',
-    specs: [['Dimensioni', 'Ø 93 × 80 mm'], ['Materiale', 'PLA Bianco Opaco'], ['Compatibilità', 'Stesso stelo 3 rami']],
-  },
-  {
-    id: 'v2_pianta', num: 9, varId: 'v2',
-    label: 'Stelo 3 Rami', badge: 'VARIAZIONE 2 · MODULARE',
-    title: 'Stelo Verde Modulare',
-    subtitle: 'Inserimento a 10 mm nel bordo',
-    desc: 'Lo stesso identico stelo del Vaso a Mattoncini: puoi spostare la tua piantina da un vaso all’altro in un secondo.',
-    specs: [['Altezza Totale', '~270 mm'], ['Pezzi Totali', '5 componenti'], ['Incastro', 'Zero colla']],
-  },
-  {
-    id: 'v3_pianta', num: 10, varId: 'v3',
-    label: 'Piantina Stand-Alone', badge: 'VARIAZIONE 3 · MINIMAL',
-    title: 'Stelo Stand-Alone da Scrivania',
-    subtitle: '4 Pezzi · Base Piana Stabile',
-    desc: 'Versione essenziale che non richiede vaso: base perfettamente piana e stabile, ideale come decorazione da scrivania o libreria.',
-    specs: [['Altezza', '~200 mm'], ['Pezzi', '1 stelo + 3 fiori'], ['Impilabile', 'Sì (fino a 6+ fiori)']],
-  },
-];
-
-// Active pins per chapter
-const CHAPTER_PINS = {
-  0: [],
-  1: [],
-  2: ['v1_quattro'],
-  3: ['v1_dot', 'v1_dot_fl'],
-  4: ['v1_lastra_s'],
-  5: ['v1_pianta_low', 'v1_pianta_high'],
-  6: ['v1_fiore_5'],
-  7: ['v1_quattro', 'v1_dot', 'v1_dot_fl'],
-  8: ['v2_vaso', 'v2_pianta'],
-  9: ['v3_pianta'],
-  10: ['v1_quattro', 'v1_lastra_s', 'v1_pianta_low', 'v1_fiore_5', 'v2_vaso', 'v2_pianta', 'v3_pianta'],
-};
-
-const CHAPTER_CARD_SIDE = {
-  0: 'left', 1: 'left', 2: 'right', 3: 'left', 4: 'right',
-  5: 'left', 6: 'right', 7: 'left', 8: 'right', 9: 'left', 10: 'top',
-};
 
 const CHAPTER_HUD = {
   0: null,
@@ -247,8 +144,6 @@ const CHAPTER_HUD = {
 const canvas = document.getElementById('webgl-canvas');
 const stageWrap = document.getElementById('stage-wrap');
 const loaderOverlay = document.getElementById('loader-overlay');
-const leaderSvg = document.getElementById('leader-svg');
-const hotspotsLayer = document.getElementById('hotspots-layer');
 const buildHud = document.getElementById('build-hud');
 const buildHudStep = document.getElementById('build-hud-step');
 const buildHudLabel = document.getElementById('build-hud-label');
@@ -373,7 +268,6 @@ const state = {
   targetZ: 0.0,
   // Toggles
   showScaleRef: false,
-  showPinsToggle: true,
   autoSpin: false,
   // Smash wave trigger tracking
   lastSmashChapter: 0,
@@ -388,7 +282,6 @@ const assembledPos = new Map();
 const flowerMeshesBySlot = [[], [], [], [], [], []]; // slots 0..5 across all variations!
 const wallMeshes = [];
 const wallXrayEdges = [];
-const pinElements = new Map();
 
 let rootScene = null;
 let v1Root = null, v2Root = null, v3Root = null;
@@ -631,7 +524,6 @@ loader.load(
     PALETTES.classic.forEach((hex, idx) => applyFlowerColor(idx, hex));
 
     buildChapterRail();
-    buildHotspotDOM();
     setupScrollChoreography();
     setupUIControls();
     setupRaycastInteractions();
@@ -993,16 +885,8 @@ function setupScrollChoreography() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 11. DE-OVERLAPPED 3D HOTSPOTS WITH SVG LEADER LINES & DRAWER
+// 11. CHAPTER NAVIGATION RAIL
 // ─────────────────────────────────────────────────────────────────────────────
-
-const drawer = document.getElementById('component-drawer');
-const drawerClose = document.getElementById('drawer-close');
-const drawerBadge = document.getElementById('drawer-badge');
-const drawerTitle = document.getElementById('drawer-title');
-const drawerSubtitle = document.getElementById('drawer-subtitle');
-const drawerDesc = document.getElementById('drawer-desc');
-const drawerSpecs = document.getElementById('drawer-specs');
 
 function buildChapterRail() {
   const rail = document.getElementById('chapter-rail');
@@ -1018,185 +902,6 @@ function buildChapterRail() {
     b.addEventListener('click', () => document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth' }));
     rail.appendChild(b);
   });
-}
-
-function buildHotspotDOM() {
-  hotspotsLayer.innerHTML = '';
-  HOTSPOTS.forEach((h) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'hotspot-pin hidden-pin';
-    btn.innerHTML = `<span class="hotspot-num">${h.num}</span><span>${h.label}</span>`;
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openDrawer(h);
-    });
-    hotspotsLayer.appendChild(btn);
-    pinElements.set(h.id, btn);
-  });
-}
-
-function openDrawer(h) {
-  pinElements.forEach((el, id) => el.classList.toggle('active', id === h.id));
-  drawerBadge.textContent = h.badge;
-  drawerTitle.textContent = h.title;
-  drawerSubtitle.textContent = h.subtitle;
-  drawerDesc.textContent = h.desc;
-  drawerSpecs.innerHTML = h.specs.map(([k, v]) => `<div class="drawer-spec-row"><span>${k}</span><strong>${v}</strong></div>`).join('');
-  drawer.classList.add('open');
-  drawer.setAttribute('aria-hidden', 'false');
-}
-
-function closeDrawer() {
-  pinElements.forEach((el) => el.classList.remove('active'));
-  drawer.classList.remove('open');
-  drawer.setAttribute('aria-hidden', 'true');
-}
-drawerClose.addEventListener('click', closeDrawer);
-
-const tmpBox = new THREE.Box3();
-const tmpVec = new THREE.Vector3();
-const tmpCorner = new THREE.Vector3();
-
-function projectBoxToScreen(box, w, h) {
-  let sxMin = Infinity, sxMax = -Infinity, syMin = Infinity, syMax = -Infinity;
-  const xs = [box.min.x, box.max.x], ys = [box.min.y, box.max.y], zs = [box.min.z, box.max.z];
-  for (let ix = 0; ix < 2; ix++) {
-    for (let iy = 0; iy < 2; iy++) {
-      for (let iz = 0; iz < 2; iz++) {
-        tmpCorner.set(xs[ix], ys[iy], zs[iz]).project(camera);
-        const px = (tmpCorner.x * 0.5 + 0.5) * w;
-        const py = (-tmpCorner.y * 0.5 + 0.5) * h;
-        if (px < sxMin) sxMin = px;
-        if (px > sxMax) sxMax = px;
-        if (py < syMin) syMin = py;
-        if (py > syMax) syMax = py;
-      }
-    }
-  }
-  return { sxMin, sxMax, syMin, syMax };
-}
-
-function updateHotspotPositions() {
-  if (!rootScene) return;
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const isMobile = w < 720;
-
-  if (!state.showPinsToggle || stageWrap.classList.contains('faded-out')) {
-    pinElements.forEach((el) => el.classList.add('hidden-pin'));
-    leaderSvg.innerHTML = '';
-    return;
-  }
-
-  const chIds = CHAPTER_PINS[state.activeChapter] || [];
-  const visibleSet = new Set(chIds);
-  const cardSide = state.manualOverride ? 'top' : (CHAPTER_CARD_SIDE[state.activeChapter] || 'none');
-
-  const minY = cardSide === 'top' ? 195 : 116;
-  const maxY = h - (state.activeChapter === 10 ? 150 : 62);
-  const minX = (!isMobile && cardSide === 'left') ? Math.min(w * 0.44, 520) : 92;
-  const maxX = (!isMobile && cardSide === 'right') ? Math.max(w * 0.56, w - 520) : w - 92;
-
-  const placed = [];
-  const compBoxes = [];
-
-  HOTSPOTS.forEach((item) => {
-    const el = pinElements.get(item.id);
-    const obj = partMap.get(item.id);
-    if (!el || !obj) return;
-
-    if (!visibleSet.has(item.id) || item.varId !== state.activeVar) {
-      el.classList.add('hidden-pin');
-      return;
-    }
-
-    tmpBox.setFromObject(obj);
-    if (tmpBox.isEmpty()) {
-      el.classList.add('hidden-pin');
-      return;
-    }
-    tmpBox.getCenter(tmpVec);
-    tmpVec.project(camera);
-    if (tmpVec.z > 1) {
-      el.classList.add('hidden-pin');
-      return;
-    }
-
-    const ax = (tmpVec.x * 0.5 + 0.5) * w;
-    const ay = (-tmpVec.y * 0.5 + 0.5) * h;
-    const sb = projectBoxToScreen(tmpBox, w, h);
-    compBoxes.push(sb);
-
-    const pillW = Math.max(124, el.offsetWidth || 138);
-    const pillH = Math.max(30, el.offsetHeight || 32);
-
-    // Place pill strictly OUTSIDE the component's projected bounding box!
-    const pad = 26;
-    const candidates = [
-      { x: sb.sxMax + pad + pillW / 2, y: ay },
-      { x: sb.sxMin - pad - pillW / 2, y: ay },
-      { x: ax, y: sb.syMin - pad - pillH / 2 },
-      { x: ax, y: sb.syMax + pad + pillH / 2 },
-    ];
-    let best = candidates[0];
-    let bestScore = -1e9;
-    candidates.forEach((c) => {
-      const inX = c.x - pillW / 2 >= minX && c.x + pillW / 2 <= maxX;
-      const inY = c.y - pillH / 2 >= minY && c.y + pillH / 2 <= maxY;
-      const distCenter = Math.hypot(c.x - w * 0.5, c.y - h * 0.5);
-      const score = (inX ? 2000 : 0) + (inY ? 2000 : 0) - distCenter * 0.25;
-      if (score > bestScore) { bestScore = score; best = c; }
-    });
-
-    placed.push({
-      el, ax, ay,
-      lx: THREE.MathUtils.clamp(best.x, minX + pillW / 2, maxX - pillW / 2),
-      ly: THREE.MathUtils.clamp(best.y, minY + pillH / 2, maxY - pillH / 2),
-      pw: pillW, ph: pillH,
-    });
-  });
-
-  // Iterative 2D repulsion (pill <-> pill & pill <-> component box)
-  for (let iter = 0; iter < 14; iter++) {
-    for (let i = 0; i < placed.length; i++) {
-      for (let j = i + 1; j < placed.length; j++) {
-        const a = placed[i], b = placed[j];
-        const dx = b.lx - a.lx;
-        const dy = b.ly - a.ly;
-        const ox = (a.pw + b.pw) * 0.5 + 12 - Math.abs(dx);
-        const oy = (a.ph + b.ph) * 0.5 + 10 - Math.abs(dy);
-        if (ox > 0 && oy > 0) {
-          if (oy < ox) {
-            const s = dy >= 0 ? 1 : -1;
-            a.ly -= s * oy * 0.5; b.ly += s * oy * 0.5;
-          } else {
-            const s = dx >= 0 ? 1 : -1;
-            a.lx -= s * ox * 0.5; b.lx += s * ox * 0.5;
-          }
-        }
-      }
-      const p = placed[i];
-      p.lx = THREE.MathUtils.clamp(p.lx, minX + p.pw / 2, maxX - p.pw / 2);
-      p.ly = THREE.MathUtils.clamp(p.ly, minY + p.ph / 2, maxY - p.ph / 2);
-    }
-  }
-
-  let svgOut = '';
-  placed.forEach((p) => {
-    p.el.classList.remove('hidden-pin');
-    p.el.style.left = `${p.lx}px`;
-    p.el.style.top = `${p.ly}px`;
-
-    const edgeX = p.lx > p.ax ? p.lx - p.pw * 0.5 : p.lx + p.pw * 0.5;
-    const midX = (p.ax + edgeX) * 0.5;
-    svgOut += `
-      <polyline points="${p.ax.toFixed(1)},${p.ay.toFixed(1)} ${midX.toFixed(1)},${p.ly.toFixed(1)} ${edgeX.toFixed(1)},${p.ly.toFixed(1)}"
-        fill="none" stroke="rgba(255,213,0,0.72)" stroke-width="1.6" stroke-dasharray="4 3" />
-      <circle cx="${p.ax.toFixed(1)}" cy="${p.ay.toFixed(1)}" r="4.2" fill="#FFD500" stroke="#0d1018" stroke-width="1.8" />
-    `;
-  });
-  leaderSvg.innerHTML = svgOut;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1242,7 +947,6 @@ const sliderExplode = document.getElementById('slider-explode');
 const valExplode = document.getElementById('val-explode');
 const btnXray = document.getElementById('btn-xray');
 const btnScale = document.getElementById('btn-scale');
-const btnPins = document.getElementById('btn-pins');
 const btnSpin = document.getElementById('btn-spin');
 
 function syncInspectorUI() {
@@ -1254,8 +958,6 @@ function syncInspectorUI() {
   btnXray.classList.toggle('active', state.xray > 0.5);
   btnScale.setAttribute('aria-pressed', String(state.showScaleRef));
   btnScale.classList.toggle('active', state.showScaleRef);
-  btnPins.setAttribute('aria-pressed', String(state.showPinsToggle));
-  btnPins.classList.toggle('active', state.showPinsToggle);
   btnSpin.setAttribute('aria-pressed', String(state.autoSpin));
   btnSpin.classList.toggle('active', state.autoSpin);
   refreshFlowerDotButtons();
@@ -1338,12 +1040,6 @@ function setupUIControls() {
     if (state.showScaleRef) {
       showToast('📏', 'SCALA REALE 1:1', 'Guarda la pila di mattoncini LEGO reali alla base!');
     }
-  });
-
-  btnPins.addEventListener('click', () => {
-    state.showPinsToggle = !state.showPinsToggle;
-    btnPins.setAttribute('aria-pressed', String(state.showPinsToggle));
-    btnPins.classList.toggle('active', state.showPinsToggle);
   });
 
   btnSpin.addEventListener('click', () => {
@@ -1484,7 +1180,6 @@ function animate() {
   updateSceneFromState(elapsed);
   updateStudParticles(dt);
   renderer.render(scene, camera);
-  updateHotspotPositions();
 }
 
 window.addEventListener('resize', () => {
