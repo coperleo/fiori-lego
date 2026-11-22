@@ -268,7 +268,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.65;
 
-const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.05, 80);
+const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.2, 80);
 camera.position.set(3.2, 3.6, 7.6);
 
 const controls = new OrbitControls(camera, canvas);
@@ -287,13 +287,15 @@ keyLight.position.set(5.5, 9.5, 6.2);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048, 2048);
 keyLight.shadow.camera.near = 1;
-keyLight.shadow.camera.far = 25;
-const sd = 4.6;
+keyLight.shadow.camera.far = 26;
+const sd = 5.4;
 keyLight.shadow.camera.left = -sd;
 keyLight.shadow.camera.right = sd;
 keyLight.shadow.camera.top = sd;
 keyLight.shadow.camera.bottom = -sd;
-keyLight.shadow.bias = -0.0005;
+keyLight.shadow.bias = -0.0002;
+keyLight.shadow.normalBias = 0.03;
+keyLight.shadow.radius = 2.5;
 scene.add(keyLight);
 
 const fillLight = new THREE.DirectionalLight(0xb8d8ff, 0.85);
@@ -304,33 +306,41 @@ const rimLight = new THREE.DirectionalLight(0xffe066, 0.55);
 rimLight.position.set(0.5, 5.0, -7.0);
 scene.add(rimLight);
 
-// Studio Floor Shadow Catcher + Subtle LEGO Pedestal Ring
+// Studio Floor Shadow Catcher + Subtle LEGO Pedestal Ring (separated layers -> zero Z-fighting!)
 const floorGroup = new THREE.Group();
 scene.add(floorGroup);
 
-const shadowPlane = new THREE.Mesh(
-  new THREE.PlaneGeometry(24, 24),
-  new THREE.ShadowMaterial({ opacity: 0.36 })
-);
-shadowPlane.rotation.x = -Math.PI / 2;
-shadowPlane.position.y = -0.002;
-shadowPlane.receiveShadow = true;
-floorGroup.add(shadowPlane);
-
 const pedestalDisc = new THREE.Mesh(
   new THREE.CylinderGeometry(1.75, 1.88, 0.06, 64),
-  new THREE.MeshStandardMaterial({ color: 0x161b29, roughness: 0.55, metalness: 0.15 })
+  new THREE.MeshStandardMaterial({ color: 0x161b29, roughness: 0.58, metalness: 0.14 })
 );
-pedestalDisc.position.y = -0.032;
-pedestalDisc.receiveShadow = true;
+pedestalDisc.position.y = -0.042; // top cap at y = -0.012 (well below shadowPlane!)
+pedestalDisc.receiveShadow = false;
 floorGroup.add(pedestalDisc);
+
+const shadowPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(26, 26),
+  new THREE.ShadowMaterial({
+    opacity: 0.34,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  })
+);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = -0.004;
+shadowPlane.receiveShadow = true;
+shadowPlane.renderOrder = 1;
+floorGroup.add(shadowPlane);
 
 const pedestalRing = new THREE.Mesh(
   new THREE.RingGeometry(1.76, 1.82, 64),
-  new THREE.MeshBasicMaterial({ color: 0xffd500, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+  new THREE.MeshBasicMaterial({ color: 0xffd500, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })
 );
 pedestalRing.rotation.x = -Math.PI / 2;
-pedestalRing.position.y = 0.001;
+pedestalRing.position.y = -0.002;
+pedestalRing.renderOrder = 2;
 floorGroup.add(pedestalRing);
 
 // ─────────────────────────────────────────────────────────────────────────────
