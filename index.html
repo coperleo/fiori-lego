@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fiori LEGO Giganti — Collezione 3D Interattiva | Vincenzo D'Ambrosio</title>
+  <meta name="description" content="Esplora, smonta, ricostruisci e colora in 3D i Fiori LEGO Giganti progettati in Fusion 360 e stampati in 3D: Vaso a Mattoncini (45 cm), Vaso Alternativo e Piantina Stand-Alone." />
+  <meta property="og:title" content="Fiori LEGO Giganti — Esperienza 3D Interattiva" />
+  <meta property="og:description" content="Brick Smash, montaggio passo-passo, Raggi X e configuratore colori live per 3 variazioni modulari stampate in 3D." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/media/v2_vaso_coppia_wide.webp" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Three.js Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- LOADING SCREEN (LEGO BRICK LOADER) -->
+  <div id="loader-overlay" class="loader-overlay">
+    <div class="loader-card">
+      <div class="loader-bricks" aria-hidden="true">
+        <span class="l-brick lb-red"></span>
+        <span class="l-brick lb-yellow"></span>
+        <span class="l-brick lb-green"></span>
+      </div>
+      <div class="loader-title">FIORI LEGO GIGANTI</div>
+      <div class="loader-text">CARICAMENTO MATTONCINI 3D…</div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION (LEGO GAME POPUP) -->
+  <div id="game-toast" class="game-toast" role="status" aria-live="polite">
+    <span class="toast-icon" id="toast-icon">🧱</span>
+    <div class="toast-body">
+      <strong id="toast-title">TRUE BUILDER!</strong>
+      <span id="toast-sub">Tutti i pezzi incastrati</span>
+    </div>
+  </div>
+
+  <!-- TOP NAVIGATION BAR (Clean — NO vincenzonet.it link here, footer only!) -->
+  <header class="topbar" id="topbar">
+    <a href="#ch-hero" class="brand">
+      <span class="brand-brick" aria-hidden="true">
+        <svg viewBox="0 0 36 36" fill="none">
+          <rect x="4" y="12" width="28" height="19" rx="4" fill="#FFD500" stroke="#1b1f2c" stroke-width="2.5"/>
+          <rect x="8" y="6" width="8" height="7" rx="2" fill="#FFD500" stroke="#1b1f2c" stroke-width="2.5"/>
+          <rect x="20" y="6" width="8" height="7" rx="2" fill="#FFD500" stroke="#1b1f2c" stroke-width="2.5"/>
+          <circle cx="18" cy="21.5" r="4.2" fill="#E32424"/>
+          <circle cx="18" cy="21.5" r="1.7" fill="#2EAD4B"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">FIORI LEGO</span>
+        <span class="brand-sub">GIGANTI 3D · 10×</span>
+      </div>
+    </a>
+
+    <nav class="topnav" aria-label="Sezioni">
+      <a href="#ch-hero">Start</a>
+      <a href="#ch-smash">Smash</a>
+      <a href="#ch-step1">Montaggio</a>
+      <a href="#ch-var2">Variazioni</a>
+      <a href="#ch-freeplay">Free Play</a>
+      <a href="#galleria">Galleria</a>
+    </nav>
+
+    <div class="topbar-hud">
+      <!-- LEGO Video Game Stud Counter & True Builder Bar (Easter Egg Trigger!) -->
+      <button type="button" id="hud-stud-btn" class="stud-hud" title="Clicca 5 volte per un segreto LEGO!">
+        <span class="stud-coin" aria-hidden="true">
+          <svg viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="12" fill="#FFD500" stroke="#9A6B00" stroke-width="2.4"/>
+            <circle cx="14" cy="14" r="6.8" fill="#FFF08A" stroke="#B67E00" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <div class="stud-info">
+          <div class="stud-row">
+            <span class="stud-score" id="stud-score">1.000</span>
+            <span class="minikit-pill" id="minikit-badge" title="Trova il Minikit nascosto nel modello 3D!">MK 0/1</span>
+          </div>
+          <div class="true-builder-track" title="Progresso True Builder">
+            <div class="true-builder-fill" id="true-builder-fill"></div>
+          </div>
+        </div>
+      </button>
+
+      <!-- Audio SFX Toggle -->
+      <button type="button" id="btn-sfx" class="hud-icon-btn" aria-pressed="false" title="Attiva/Disattiva suoni mattoncini LEGO">
+        <span id="sfx-icon">🔇</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- RIGHT CHAPTER PROGRESS DOTS -->
+  <aside class="chapter-rail" id="chapter-rail" aria-label="Capitoli 3D"></aside>
+
+  <!-- FIXED FULLSCREEN 3D STAGE -->
+  <div class="stage-wrap" id="stage-wrap">
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- SVG Leader Lines + 3D Hotspot Pins (De-Overlapped) -->
+    <svg id="leader-svg" class="leader-svg" aria-hidden="true"></svg>
+    <div id="hotspots-layer" class="hotspots-layer"></div>
+
+    <!-- Floating Instruction HUD Pill (Top-Center during build chapters) -->
+    <div id="build-hud" class="build-hud hidden">
+      <span class="build-hud-step" id="build-hud-step">STEP 1/12</span>
+      <span class="build-hud-sep">·</span>
+      <span class="build-hud-label" id="build-hud-label">Nucleo SNOT Nero</span>
+    </div>
+
+    <!-- Quick Interactive Flower Color Bar (Visible in Hero & Build/FreePlay) -->
+    <div id="quick-color-bar" class="quick-color-bar">
+      <span class="qcb-label">🎨 Fiori:</span>
+      <div class="qcb-presets" id="qcb-presets">
+        <button type="button" class="qcb-btn active" data-palette="classic" title="Classico LEGO (Rosso, Giallo, Bianco)">
+          <i style="background:#E32424"></i><i style="background:#FFD500"></i><i style="background:#F5F5F0"></i>
+        </button>
+        <button type="button" class="qcb-btn" data-palette="spring" title="Primavera (Arancio, Magenta, Viola)">
+          <i style="background:#FF7A1A"></i><i style="background:#D81B8A"></i><i style="background:#7A3CE0"></i>
+        </button>
+        <button type="button" class="qcb-btn" data-palette="rainbow" title="Arcobaleno LEGO">
+          <i style="background:#E32424"></i><i style="background:#FFD500"></i><i style="background:#1E88E5"></i>
+        </button>
+        <button type="button" class="qcb-btn" data-palette="sunset" title="Tramonto (Corallo, Arancio, Giallo)">
+          <i style="background:#FF4D5A"></i><i style="background:#FF8F1F"></i><i style="background:#FFE047"></i>
+        </button>
+        <button type="button" class="qcb-btn" data-palette="ruby" title="Botanico Rosso">
+          <i style="background:#D91C1C"></i><i style="background:#F03E3E"></i><i style="background:#B51212"></i>
+        </button>
+        <button type="button" class="qcb-btn" data-palette="random" title="Mescola colori casuali!">🎲</button>
+      </div>
+    </div>
+
+    <!-- FREE PLAY 360° INSPECTOR DOCK (Chapter 10) -->
+    <div id="inspector-dock" class="inspector-dock">
+      <div class="dock-row dock-top-row">
+        <!-- Variation Selector -->
+        <div class="dock-group">
+          <span class="dock-label">VARIAZIONE</span>
+          <div class="dock-seg" id="var-selector">
+            <button type="button" class="seg-btn active" data-var="v1">🧱 Vaso Mattoncini</button>
+            <button type="button" class="seg-btn" data-var="v2">🤍 Vaso Alternativo</button>
+            <button type="button" class="seg-btn" data-var="v3">🌱 Stand-Alone</button>
+          </div>
+        </div>
+
+        <!-- Per-Flower Individual Color Customizer -->
+        <div class="dock-group">
+          <span class="dock-label">COLORA SINGOLO FIORE (o clicca in 3D)</span>
+          <div class="flower-dots" id="flower-dots"></div>
+        </div>
+      </div>
+
+      <div class="dock-row dock-bottom-row">
+        <!-- Build / Smash Slider -->
+        <div class="dock-slider-wrap">
+          <label for="slider-build" class="dock-label">
+            <span>MONTAGGIO</span>
+            <strong id="val-build">100%</strong>
+          </label>
+          <input type="range" id="slider-build" min="0" max="100" value="100" />
+        </div>
+
+        <!-- Technical Explode Slider -->
+        <div class="dock-slider-wrap">
+          <label for="slider-explode" class="dock-label">
+            <span>ESPLOSO CAD</span>
+            <strong id="val-explode">0%</strong>
+          </label>
+          <input type="range" id="slider-explode" min="0" max="100" value="0" />
+        </div>
+
+        <!-- Action Toggle Buttons -->
+        <div class="dock-actions">
+          <button type="button" id="btn-smash" class="dock-btn dock-btn-red" title="Scomponi e ricostruisci come un gioco LEGO!">💥 Smash!</button>
+          <button type="button" id="btn-xray" class="dock-btn" aria-pressed="false">🩻 Raggi X</button>
+          <button type="button" id="btn-scale" class="dock-btn" aria-pressed="false" title="Affianca mattoncini LEGO reali in scala 1:1">📏 Scala 1:1</button>
+          <button type="button" id="btn-pins" class="dock-btn active" aria-pressed="true">🏷️ Pezzi</button>
+          <button type="button" id="btn-spin" class="dock-btn" aria-pressed="false">🔄 360°</button>
+          <button type="button" id="btn-reset" class="dock-btn" title="Ripristina vista">↺</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE-OUT COMPONENT SPEC DRAWER -->
+  <aside id="component-drawer" class="component-drawer" aria-hidden="true">
+    <button type="button" id="drawer-close" class="drawer-close" aria-label="Chiudi scheda">✕</button>
+    <div class="drawer-badge" id="drawer-badge">PEZZO 3D</div>
+    <h3 class="drawer-title" id="drawer-title">Titolo Pezzo</h3>
+    <p class="drawer-subtitle" id="drawer-subtitle">Sottotitolo tecnico</p>
+    <p class="drawer-desc" id="drawer-desc"></p>
+    <div class="drawer-specs" id="drawer-specs"></div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SCROLLYTELLING CHAPTERS (0 -> 10)
+       Hero (Montato) -> Smash (Caduto a pezzi) -> Step-by-Step Build ->
+       X-Ray -> Vaso Alternativo -> Stand-Alone -> Free Play 360°
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <main class="scroll-story" id="scroll-story">
+
+    <!-- CHAPTER 0: HERO (SUBITO MONTATO!) -->
+    <section class="chapter ch-hero" id="ch-hero" data-ch="0">
+      <div class="manual-card hero-card">
+        <div class="card-badges">
+          <span class="brick-tag tag-yellow">SET #2003439</span>
+          <span class="brick-tag tag-green">FUSION 360 · PLA 3D</span>
+          <span class="brick-tag tag-blue">3 VARIAZIONI</span>
+        </div>
+        <h1 class="hero-title">
+          FIORI LEGO<br />
+          <span class="accent-yellow">GIGANTI</span>
+        </h1>
+        <p class="hero-lead">
+          Ispirati ai classici mattoncini botanici in scala <strong>10×</strong>:
+          <strong>45 cm</strong> di altezza, incastri meccanici puri senza una goccia di colla
+          e fiori dai colori intercambiabili.
+        </p>
+
+        <div class="hero-stats">
+          <div class="stat-brick">
+            <strong>45 cm</strong>
+            <span>Altezza max</span>
+          </div>
+          <div class="stat-brick">
+            <strong>15 pz</strong>
+            <span>Ad incastro</span>
+          </div>
+          <div class="stat-brick">
+            <strong>0 g</strong>
+            <span>Colla usata</span>
+          </div>
+        </div>
+
+        <div class="hero-cta-row">
+          <a href="#ch-smash" class="lego-btn lego-btn-yellow">
+            <span>▶ INIZIA A COSTRUIRE</span>
+          </a>
+          <a href="#ch-freeplay" class="lego-btn lego-btn-dark">
+            <span>🎨 FREE PLAY 360°</span>
+          </a>
+        </div>
+
+        <div class="scroll-cue">
+          <span class="scroll-mouse"></span>
+          <span>Scorri verso il basso per smontare e ricostruire il set!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 1: BRICK SMASH! (CADUTO A PEZZI!) -->
+    <section class="chapter ch-left" id="ch-smash" data-ch="1">
+      <div class="manual-card smash-card">
+        <div class="manual-header">
+          <span class="step-big step-red">💥</span>
+          <div class="parts-box parts-box-red">
+            <span class="parts-qty">15×</span>
+            <span class="parts-name">PEZZI A TERRA</span>
+          </div>
+        </div>
+        <h2>OH NO! CADUTO A PEZZI!</h2>
+        <p>
+          Proprio come nei videogiochi LEGO quando un oggetto esplode in una pioggia di stud:
+          tutti i <strong>15 componenti stampati in 3D</strong> si sono sparsi sul piano.
+        </p>
+        <p class="manual-tip">
+          💡 <strong>Missione:</strong> continua a scorrere per rimettere insieme ogni singolo
+          pezzo seguendo il manuale di montaggio, dal nucleo centrale fino all’ultimo petalo!
+        </p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 2: STEP 1 — IL NUCLEO SNOT (quattro) -->
+    <section class="chapter ch-right" id="ch-step1" data-ch="2">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big">1</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <rect x="11" y="13" width="26" height="26" rx="3" fill="#23262f" stroke="#0d1018" stroke-width="2.5"/>
+              <rect x="18" y="7" width="12" height="6" rx="2" fill="#2f3340" stroke="#0d1018" stroke-width="2"/>
+              <circle cx="24" cy="26" r="6" fill="#3a3f4e" stroke="#0d1018" stroke-width="2"/>
+            </svg>
+            <span class="parts-qty">1×</span>
+            <span class="parts-name">NUCLEO SNOT</span>
+          </div>
+        </div>
+        <h2>Il Cuore Strutturale (1×1 SNOT)</h2>
+        <p>
+          Tutto parte dal <strong>cubo nero da 112 mm</strong> con 4 perni laterali
+          (tecnica <em>Studs Not On Top</em>) e un perno superiore. È la fondazione che regge
+          l’intero vaso e distribuisce il peso dei due steli giganti.
+        </p>
+        <div class="spec-chips">
+          <span>112 × 112 × 112 mm</span>
+          <span>PLA Nero Opaco</span>
+          <span>5 Stud d’incastro</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 3: STEP 2 & 3 — PIASTRE ADATTATRICI (dot + dot_fl) -->
+    <section class="chapter ch-left" id="ch-step23" data-ch="3">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big">2–3</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <ellipse cx="24" cy="30" rx="16" ry="8" fill="#D8C298" stroke="#0d1018" stroke-width="2"/>
+              <ellipse cx="24" cy="20" rx="14" ry="7" fill="#2EAD4B" stroke="#0d1018" stroke-width="2"/>
+              <ellipse cx="24" cy="14" rx="7" ry="4" fill="#3DC95E" stroke="#0d1018" stroke-width="2"/>
+            </svg>
+            <span class="parts-qty">1× + 1×</span>
+            <span class="parts-name">DOT &amp; FIORE</span>
+          </div>
+        </div>
+        <h2>Adattatori Tondo &amp; Fiore</h2>
+        <p>
+          Sopra il cubo SNOT si incastra prima la <strong>piastra tonda beige (<code>dot</code>)</strong>
+          da 80 mm e subito dopo il <strong>connettore verde a corolla (<code>dot_fl</code>)</strong>,
+          che porta la quota d’appoggio a filo del bordo del vaso.
+        </p>
+        <div class="spec-chips">
+          <span>Ø 80 mm</span>
+          <span>Tolleranza Fusion 360</span>
+          <span>Zero Colla</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 4: STEP 4 — LE 4 PARETI A DOGHE (lastra x4) -->
+    <section class="chapter ch-right" id="ch-step4" data-ch="4">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big">4</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <rect x="8" y="8" width="7" height="32" rx="1.5" fill="#D8C298" stroke="#0d1018" stroke-width="2"/>
+              <rect x="20.5" y="8" width="7" height="32" rx="1.5" fill="#D8C298" stroke="#0d1018" stroke-width="2"/>
+              <rect x="33" y="8" width="7" height="32" rx="1.5" fill="#D8C298" stroke="#0d1018" stroke-width="2"/>
+            </svg>
+            <span class="parts-qty">4×</span>
+            <span class="parts-name">PARETI DOGHE</span>
+          </div>
+        </div>
+        <h2>Le 4 Pareti a Doghe Tan</h2>
+        <p>
+          Quattro pannelli scanalati da <strong>160 mm</strong> convergono dai quattro punti
+          cardinali e si agganciano con un <em>click</em> preciso ai perni laterali del cubo nero,
+          creando l’iconica fioriera a listelli in stile LEGO Botanical.
+        </p>
+        <div class="spec-chips">
+          <span>4× Identici (80×32×160 mm)</span>
+          <span>PLA Sand / Tan</span>
+          <span>Stampa Piana Senza Supporti</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 5: STEP 5 & 6 — DOPPIO STELO BOTANICO -->
+    <section class="chapter ch-left" id="ch-step56" data-ch="5">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big">5–6</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <rect x="18" y="24" width="12" height="16" rx="2" fill="#2EAD4B" stroke="#0d1018" stroke-width="2"/>
+              <path d="M20 26 L10 9 M24 24 L24 6 M28 26 L38 9" stroke="#2EAD4B" stroke-width="4.5" stroke-linecap="round"/>
+            </svg>
+            <span class="parts-qty">2×</span>
+            <span class="parts-name">STELO 3 RAMI</span>
+          </div>
+        </div>
+        <h2>Doppio Stelo Impilabile (+60°)</h2>
+        <p>
+          Il primo stelo verde a 3 rami si inserisce nel vaso; il secondo si impila esattamente
+          <strong>64 mm</strong> più in alto ruotato di <strong>60°</strong>, aprendo una chioma
+          armoniosa a 6 rami sfalsati ad altezze diverse fino a 45 cm!
+        </p>
+        <div class="spec-chips">
+          <span>Verde Botanico Fisso</span>
+          <span>6 Rami Sfalsati</span>
+          <span>Impilabile all’Infinito</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 6: STEP 7–12 — SBOCCIANO I 6 FIORI! -->
+    <section class="chapter ch-right" id="ch-step712" data-ch="6">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big">7–12</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <circle cx="24" cy="14" r="7" fill="#E32424"/>
+              <circle cx="33" cy="21" r="7" fill="#E32424"/>
+              <circle cx="30" cy="32" r="7" fill="#E32424"/>
+              <circle cx="18" cy="32" r="7" fill="#E32424"/>
+              <circle cx="15" cy="21" r="7" fill="#E32424"/>
+              <circle cx="24" cy="24" r="7" fill="#FFD500" stroke="#0d1018" stroke-width="2"/>
+              <circle cx="24" cy="24" r="2.8" fill="#2EAD4B"/>
+            </svg>
+            <span class="parts-qty">6×</span>
+            <span class="parts-name">FIORI GIGANTI</span>
+          </div>
+        </div>
+        <h2>Sbocciano i 6 Fiori!</h2>
+        <p>
+          Uno dopo l’altro i 6 fiori da <strong>88 mm</strong> scivolano sulle punte arrotondate
+          degli steli verdi. Puoi stampare i petali in qualunque filamento PLA e cambiarli
+          quando vuoi: <strong>solo i fiori cambiano colore</strong>, steli e vaso restano fedeli
+          al design originale!
+        </p>
+        <div class="card-inline-action">
+          <button type="button" class="lego-btn lego-btn-yellow btn-shuffle-flowers">🎲 Mescola Colori Fiori</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 7: RAGGI X — INCASTRO INTERNO -->
+    <section class="chapter ch-left" id="ch-xray" data-ch="7">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big step-blue">X</span>
+          <div class="parts-box">
+            <span class="parts-qty">180°</span>
+            <span class="parts-name">RAGGI X CAD</span>
+          </div>
+        </div>
+        <h2>Sotto la Scocca: Incastri Puri</h2>
+        <p>
+          In modalità <strong>Raggi X</strong> le 4 pareti a doghe diventano traslucide rivelando
+          l’architettura interna: il cubo SNOT nero bloccato al centro, l’anello <code>dot</code> e
+          il fiore <code>dot_fl</code> che sostengono gli steli senza viti né colle.
+        </p>
+        <p class="manual-tip">
+          🕵️ <em>Psst… nei giochi LEGO c’è sempre un <strong>Minikit</strong> nascosto dietro i mattoncini!</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- CHAPTER 8: VARIAZIONE 2 — VASO ALTERNATIVO -->
+    <section class="chapter ch-right" id="ch-var2" data-ch="8">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big step-green">V2</span>
+          <div class="parts-box">
+            <svg class="part-icon" viewBox="0 0 48 48">
+              <path d="M12 16 L36 16 L32 40 L16 40 Z" fill="#F5F5F0" stroke="#0d1018" stroke-width="2.5"/>
+              <rect x="10" y="11" width="28" height="6" rx="2" fill="#FFFFFF" stroke="#0d1018" stroke-width="2.5"/>
+            </svg>
+            <span class="parts-qty">5 pz</span>
+            <span class="parts-name">VASO ALT.</span>
+          </div>
+        </div>
+        <h2>Variazione 2: Vaso Alternativo</h2>
+        <p>
+          Stesso identico stelo modulare, look completamente nuovo: il <strong>vasetto bianco
+          troncoconico</strong> (<code>vaso.3mf</code>, Ø 93 mm × 80 mm) si stampa in un unico pezzo
+          veloce e trasforma la piantina in un complemento d’arredo pulito per mensole e librerie.
+        </p>
+        <div class="spec-chips">
+          <span>~27 cm altezza</span>
+          <span>1 Stelo · 3 Fiori</span>
+          <span>Stampa Rapida</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 9: VARIAZIONE 3 — PIANTINA STAND-ALONE (+ SCALA 1:1!) -->
+    <section class="chapter ch-left" id="ch-var3" data-ch="9">
+      <div class="manual-card">
+        <div class="manual-header">
+          <span class="step-big step-yellow">V3</span>
+          <div class="parts-box">
+            <span class="parts-qty">4 pz</span>
+            <span class="parts-name">STAND-ALONE</span>
+          </div>
+        </div>
+        <h2>Variazione 3: Piantina Stand-Alone</h2>
+        <p>
+          Essenziale e iconica: solo lo <strong>stelo verde a 3 rami</strong> poggiato direttamente
+          sulla scrivania con i suoi <strong>3 fiori giganti</strong>.
+          Guarda la piletta di mattoncini LEGO reali in <strong>scala 1:1</strong> di fianco per
+          percepire le proporzioni fuori scala!
+        </p>
+        <div class="spec-chips">
+          <span>~20 cm altezza</span>
+          <span>Solo 4 Pezzi</span>
+          <span>Scala ~10× vs Mattoncino Reale</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER 10: FREE PLAY 360° & CONFIGURATORE -->
+    <section class="chapter ch-top" id="ch-freeplay" data-ch="10">
+      <div class="manual-card freeplay-banner">
+        <span class="brick-tag tag-yellow">FREE PLAY MODE · 360°</span>
+        <h2>Ruota, Smonta, Colora &amp; Scopri i Segreti!</h2>
+        <p>
+          Trascina per ruotare a 360°, <strong>clicca direttamente sui fiori in 3D</strong> per
+          cambiarne il colore uno a uno, oppure premi <strong>💥 Smash!</strong> nella barra qui sotto.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BELOW-THE-FOLD: 3 VARIATIONS, PRINT SPECS, REAL GALLERY & FOOTER
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="below-fold">
+
+    <!-- 3 VARIATIONS SHOWCASE -->
+    <section class="bf-section" id="variazioni">
+      <div class="bf-container">
+        <div class="section-head">
+          <span class="brick-tag tag-blue">SISTEMA MODULARE</span>
+          <h2>Tre Variazioni, Un Unico Sistema ad Incastro</h2>
+          <p>Tutti gli steli e i fiori condividono la stessa geometria parametrica progettata in Fusion 360.</p>
+        </div>
+
+        <div class="variations-grid">
+          <article class="var-card">
+            <div class="var-thumb">
+              <img src="assets/media/v1_full_6fiori.webp" alt="Vaso a Mattoncini completo con 6 fiori" loading="lazy" />
+              <span class="var-pill">VARIAZIONE 1 · TOP</span>
+            </div>
+            <div class="var-body">
+              <h3>Vaso a Mattoncini (2 Steli)</h3>
+              <p>L’edizione gigante completa da ~45 cm: nucleo SNOT nero, 4 pareti a doghe beige, doppio stelo impilato e 6 fiori personalizzabili.</p>
+              <ul class="var-specs">
+                <li><span>Altezza</span><strong>~450 mm</strong></li>
+                <li><span>Componenti</span><strong>15 pezzi (0 colla)</strong></li>
+                <li><span>Fiori</span><strong>6× intercambiabili</strong></li>
+              </ul>
+              <button type="button" class="lego-btn lego-btn-yellow jump-freeplay" data-var="v1">Esplora in 3D →</button>
+            </div>
+          </article>
+
+          <article class="var-card">
+            <div class="var-thumb">
+              <img src="assets/media/v2_vaso_singolo.webp" alt="Vaso Alternativo bianco tondo con 3 fiori" loading="lazy" />
+              <span class="var-pill pill-green">VARIAZIONE 2</span>
+            </div>
+            <div class="var-body">
+              <h3>Vaso Alternativo Tondo</h3>
+              <p>Vasetto minimalista bianco in pezzo unico da 93 mm di diametro, progettato per accogliere lo stelo verde a pressione perfetta.</p>
+              <ul class="var-specs">
+                <li><span>Altezza</span><strong>~270 mm</strong></li>
+                <li><span>Componenti</span><strong>5 pezzi</strong></li>
+                <li><span>Fiori</span><strong>3× intercambiabili</strong></li>
+              </ul>
+              <button type="button" class="lego-btn lego-btn-blue jump-freeplay" data-var="v2">Esplora in 3D →</button>
+            </div>
+          </article>
+
+          <article class="var-card">
+            <div class="var-thumb">
+              <img src="assets/media/v3_solo_minifig.webp" alt="Piantina Stand-Alone accanto a minifigure LEGO" loading="lazy" />
+              <span class="var-pill pill-red">VARIAZIONE 3</span>
+            </div>
+            <div class="var-body">
+              <h3>Piantina Stand-Alone</h3>
+              <p>Lo stelo classico a 3 rami che si regge autonomamente sulla scrivania. Semplice, veloce da stampare e impilabile in colonna.</p>
+              <ul class="var-specs">
+                <li><span>Altezza</span><strong>~200 mm</strong></li>
+                <li><span>Componenti</span><strong>4 pezzi</strong></li>
+                <li><span>Scala</span><strong>~10× mattoncino reale</strong></li>
+              </ul>
+              <button type="button" class="lego-btn lego-btn-dark jump-freeplay" data-var="v3">Esplora in 3D →</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD & PRINT SPECS -->
+    <section class="bf-section bf-alt" id="specifiche">
+      <div class="bf-container">
+        <div class="section-head">
+          <span class="brick-tag tag-yellow">STAMPA 3D &amp; CAD</span>
+          <h2>Progettato in Fusion 360, Pronto per la Stampante</h2>
+          <p>Scarica i profili di stampa ottimizzati su MakerWorld oppure esplora il codice di questa esperienza 3D su GitHub.</p>
+        </div>
+
+        <div class="specs-grid">
+          <div class="spec-card">
+            <span class="spec-ico">📐</span>
+            <h4>CAD Parametrico</h4>
+            <p>Modellato interamente da zero in <strong>Autodesk Fusion 360</strong> con tolleranze calibrate per incastri solidi senza colla.</p>
+          </div>
+          <div class="spec-card">
+            <span class="spec-ico">🖨️</span>
+            <h4>Zero Multicolore Obbligatorio</h4>
+            <p>Ogni pezzo è separato per colore: puoi stampare su qualsiasi stampante monocolore cambiando bobina tra vaso, steli e fiori.</p>
+          </div>
+          <div class="spec-card">
+            <span class="spec-ico">🎨</span>
+            <h4>Fiori Mix &amp; Match</h4>
+            <p>Stampa decine di fiori in PLA Rosso, Giallo, Bianco, Arancio, Magenta, Viola o Blu e cambia palette in ogni stagione.</p>
+          </div>
+          <div class="spec-card">
+            <span class="spec-ico">🧩</span>
+            <h4>Montaggio da Manuale</h4>
+            <p>12 passaggi intuitivi ispirati ai classici libretti di istruzioni a mattoncini, divertente da assemblare e smontare.</p>
+          </div>
+        </div>
+
+        <div class="cta-banner">
+          <div class="cta-text">
+            <h3>Vuoi stampare i tuoi Fiori LEGO Giganti?</h3>
+            <p>Trovi tutti i file <code>.3mf</code> e i profili di stampa pronti su MakerWorld, e il sorgente web 3D su GitHub.</p>
+          </div>
+          <div class="cta-actions">
+            <a href="https://makerworld.com/it/models/2003439-giant-brick-style-flowerpot#profileId-2157392" target="_blank" rel="noopener" class="lego-btn lego-btn-yellow">
+              🧱 Scarica su MakerWorld ↗
+            </a>
+            <a href="https://github.com/coperleo/fiori-lego" target="_blank" rel="noopener" class="lego-btn lego-btn-dark">
+              🐙 Repository GitHub ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REAL 3D-PRINTED PHOTO GALLERY -->
+    <section class="bf-section" id="galleria">
+      <div class="bf-container">
+        <div class="section-head">
+          <span class="brick-tag tag-green">FOTO REALI</span>
+          <h2>Dal Modello CAD alla Stampa Reale</h2>
+          <p>Scatti reali dei prototipi stampati in PLA opaco — clicca su una foto per ingrandirla.</p>
+        </div>
+
+        <div class="gallery-grid" id="gallery-grid">
+          <figure class="gal-item gal-wide">
+            <img src="assets/media/v2_vaso_coppia_wide.webp" alt="Coppia di vasi alternativi bianchi con fiori colorati su mensola" loading="lazy" />
+            <figcaption>Vaso Alternativo — Coppia con 6 varianti colore fiori</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v1_scale_brick.webp" alt="Vaso a Mattoncini affiancato a mattoncini LEGO reali per scala" loading="lazy" />
+            <figcaption>Scala 10× a confronto con mattoncini reali</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v1_kit_smontato.webp" alt="Tutti i pezzi stampati in 3D smontati prima del montaggio" loading="lazy" />
+            <figcaption>Kit completo smontato pronto al montaggio</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v1_incastro_snot.webp" alt="Dettaglio incastro parete a doghe sul cubo SNOT nero" loading="lazy" />
+            <figcaption>Incastro parete a doghe sul nucleo SNOT nero</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v1_macro_fiori.webp" alt="Macro qualità stampa 3D dei fiori rosso giallo bianco" loading="lazy" />
+            <figcaption>Dettaglio finitura PLA su fiori e doghe</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v3_solo_minifig.webp" alt="Piantina stand-alone accanto a una minifigure LEGO" loading="lazy" />
+            <figcaption>Stand-Alone vs Minifigure LEGO reale</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v2_colori_vari.webp" alt="Vasetti alternativi con fiori blu, lime, magenta, arancione" loading="lazy" />
+            <figcaption>Combinazioni colore primavera &amp; pop</figcaption>
+          </figure>
+          <figure class="gal-item">
+            <img src="assets/media/v3_solo_doppio.webp" alt="Due steli verdi impilati in versione stand-alone con 6 fiori" loading="lazy" />
+            <figcaption>Steli modulari impilabili anche senza vaso</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLEAN FOOTER (vincenzonet.it link ONLY here!) -->
+    <footer class="site-footer">
+      <div class="bf-container footer-inner">
+        <div class="footer-left">
+          <strong>FIORI LEGO GIGANTI</strong>
+          <span>Progettazione 3D &amp; Esperienza WebGL di Vincenzo D’Ambrosio (Coperleo)</span>
+        </div>
+        <div class="footer-links">
+          <a href="https://makerworld.com/it/models/2003439-giant-brick-style-flowerpot#profileId-2157392" target="_blank" rel="noopener">MakerWorld ↗</a>
+          <a href="https://github.com/coperleo/fiori-lego" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="https://www.vincenzonet.it" target="_blank" rel="noopener" class="footer-portfolio">Portfolio Vincenzo D'Ambrosio ↗</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- LIGHTBOX FOR GALLERY -->
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <button type="button" id="lightbox-close" class="lightbox-close" aria-label="Chiudi immagine">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+    <p id="lightbox-cap"></p>
+  </div>
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
