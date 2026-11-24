@@ -12,12 +12,14 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preload" href="assets/fiori_lego.glb?v=2" as="fetch" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 
   <link rel="icon" type="image/svg+xml" href="assets/media/favicon.svg" />
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/media/fiori_lego_icon.png" />
+  <link rel="icon" type="image/png" sizes="256x256" href="assets/media/fiori_lego_icon.png" />
   <link rel="apple-touch-icon" href="assets/media/fiori_lego_icon.png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=2" />
 
   <!-- Three.js Import Map -->
   <script type="importmap">
@@ -511,7 +513,7 @@
         <div class="variations-grid">
           <article class="var-card">
             <div class="var-thumb">
-              <img src="assets/media/v1_full_6fiori.webp" alt="Vaso a Mattoncini completo con 6 fiori" loading="lazy" />
+              <img src="assets/media/v1_full_6fiori.webp" alt="Vaso a Mattoncini completo con 6 fiori" loading="lazy" decoding="async" />
               <span class="var-pill">VARIAZIONE 1 · TOP</span>
             </div>
             <div class="var-body">
@@ -528,7 +530,7 @@
 
           <article class="var-card">
             <div class="var-thumb">
-              <img src="assets/media/v2_vaso_singolo.webp" alt="Vaso Alternativo bianco tondo con 3 fiori" loading="lazy" />
+              <img src="assets/media/v2_vaso_singolo.webp" alt="Vaso Alternativo bianco tondo con 3 fiori" loading="lazy" decoding="async" />
               <span class="var-pill pill-green">VARIAZIONE 2</span>
             </div>
             <div class="var-body">
@@ -545,7 +547,7 @@
 
           <article class="var-card">
             <div class="var-thumb">
-              <img src="assets/media/v3_solo_minifig.webp" alt="Piantina Stand-Alone accanto a minifigure LEGO" loading="lazy" />
+              <img src="assets/media/v3_solo_minifig.webp" alt="Piantina Stand-Alone accanto a minifigure LEGO" loading="lazy" decoding="async" />
               <span class="var-pill pill-red">VARIAZIONE 3</span>
             </div>
             <div class="var-body">
@@ -623,35 +625,35 @@
 
         <div class="gallery-grid" id="gallery-grid">
           <figure class="gal-item gal-wide">
-            <img src="assets/media/v2_vaso_coppia_wide.webp" alt="Coppia di vasi alternativi bianchi con fiori colorati su mensola" loading="lazy" />
+            <img src="assets/media/v2_vaso_coppia_wide.webp" alt="Coppia di vasi alternativi bianchi con fiori colorati su mensola" loading="lazy" decoding="async" />
             <figcaption>Vaso Alternativo — Coppia con 6 varianti colore fiori</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v1_scale_brick.webp" alt="Vaso a Mattoncini affiancato a mattoncini LEGO reali per scala" loading="lazy" />
+            <img src="assets/media/v1_scale_brick.webp" alt="Vaso a Mattoncini affiancato a mattoncini LEGO reali per scala" loading="lazy" decoding="async" />
             <figcaption>Scala 10× a confronto con mattoncini reali</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v1_kit_smontato.webp" alt="Tutti i pezzi stampati in 3D smontati prima del montaggio" loading="lazy" />
+            <img src="assets/media/v1_kit_smontato.webp" alt="Tutti i pezzi stampati in 3D smontati prima del montaggio" loading="lazy" decoding="async" />
             <figcaption>Kit completo smontato pronto al montaggio</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v1_incastro_snot.webp" alt="Dettaglio incastro parete a doghe sul cubo SNOT nero" loading="lazy" />
+            <img src="assets/media/v1_incastro_snot.webp" alt="Dettaglio incastro parete a doghe sul cubo SNOT nero" loading="lazy" decoding="async" />
             <figcaption>Incastro parete a doghe sul nucleo SNOT nero</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v1_macro_fiori.webp" alt="Macro qualità stampa 3D dei fiori rosso giallo bianco" loading="lazy" />
+            <img src="assets/media/v1_macro_fiori.webp" alt="Macro qualità stampa 3D dei fiori rosso giallo bianco" loading="lazy" decoding="async" />
             <figcaption>Dettaglio finitura PLA su fiori e doghe</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v3_solo_minifig.webp" alt="Piantina stand-alone accanto a una minifigure LEGO" loading="lazy" />
+            <img src="assets/media/v3_solo_minifig.webp" alt="Piantina stand-alone accanto a una minifigure LEGO" loading="lazy" decoding="async" />
             <figcaption>Stand-Alone vs Minifigure LEGO reale</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v2_colori_vari.webp" alt="Vasetti alternativi con fiori blu, lime, magenta, arancione" loading="lazy" />
+            <img src="assets/media/v2_colori_vari.webp" alt="Vasetti alternativi con fiori blu, lime, magenta, arancione" loading="lazy" decoding="async" />
             <figcaption>Combinazioni colore primavera &amp; pop</figcaption>
           </figure>
           <figure class="gal-item">
-            <img src="assets/media/v3_solo_doppio.webp" alt="Due steli verdi impilati in versione stand-alone con 6 fiori" loading="lazy" />
+            <img src="assets/media/v3_solo_doppio.webp" alt="Due steli verdi impilati in versione stand-alone con 6 fiori" loading="lazy" decoding="async" />
             <figcaption>Steli modulari impilabili anche senza vaso</figcaption>
           </figure>
         </div>
@@ -682,8 +684,8 @@
   </div>
 
   <!-- GSAP + ScrollTrigger -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script type="module" src="js/app.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+  <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>

@@ -150,8 +150,9 @@ const buildHudLabel = document.getElementById('build-hud-label');
 const inspectorDock = document.getElementById('inspector-dock');
 const quickColorBar = document.getElementById('quick-color-bar');
 
+const isMobileInit = window.innerWidth < 768;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileInit ? 1.5 : 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.08;
@@ -160,8 +161,12 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const roomEnv = new RoomEnvironment();
+scene.environment = pmrem.fromScene(roomEnv, 0.04).texture;
 scene.environmentIntensity = 0.65;
+// Free temporary PMREM GPU render targets immediately (no VRAM leak!)
+roomEnv.dispose();
+pmrem.dispose();
 
 const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.2, 80);
 camera.position.set(3.2, 3.6, 7.6);
@@ -176,11 +181,12 @@ controls.maxPolarAngle = Math.PI * 0.495;
 controls.enabled = false;
 controls.target.set(0, 2.0, 0);
 
-// Warm-Key + Cool-Rim Studio Lighting (highlights glossy LEGO PLA edges!)
+// Warm-Key + Cool-Rim Studio Lighting (adaptive shadow map resolution for silky mobile FPS!)
 const keyLight = new THREE.DirectionalLight(0xfff7e6, 2.0);
 keyLight.position.set(5.5, 9.5, 6.2);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(2048, 2048);
+const shadowRes = isMobileInit ? 1024 : 2048;
+keyLight.shadow.mapSize.set(shadowRes, shadowRes);
 keyLight.shadow.camera.near = 1;
 keyLight.shadow.camera.far = 26;
 const sd = 5.4;
@@ -279,6 +285,7 @@ const state = {
 
 const partMap = new Map();
 const assembledPos = new Map();
+const origScale = new WeakMap();
 const flowerMeshesBySlot = [[], [], [], [], [], []]; // slots 0..5 across all variations!
 const wallMeshes = [];
 const wallXrayEdges = [];
@@ -288,6 +295,16 @@ let v1Root = null, v2Root = null, v3Root = null;
 let scaleRefRoot = null;
 let minikitRoot = null;
 let studProtoMesh = null;
+let studBaseScale = 1.0;
+
+// Render-loop efficiency flags (0% GPU/battery when hidden or below the fold!)
+let stageFadedOut = false;
+let tabHidden = document.hidden;
+let lastXrayAmt = -1;
+let lastTransformSig = '';
+let pendingFreePlayVar = null;
+let activeSmashTl = null;
+const tmpDir = new THREE.Vector3();
 
 // 3D Flying LEGO Stud Particles (for Brick Smash & Easter Egg celebrations!)
 const studParticles = [];
@@ -300,10 +317,16 @@ const STUD_PALETTE_MATS = [
 
 function spawnStudBurst(count = 16, originY = 1.8, spread = 2.6, includePurple = false) {
   if (!studProtoMesh) return;
+  const maxActive = 64;
+  while (studParticles.length + count > maxActive && studParticles.length > 0) {
+    const oldest = studParticles.shift();
+    scene.remove(oldest.mesh);
+  }
+  const sBase = studBaseScale * 1.15;
   for (let i = 0; i < count; i++) {
     const tier = includePurple && i % 5 === 0 ? 3 : (i % 4 === 0 ? 2 : (i % 2 === 0 ? 1 : 0));
     const mesh = new THREE.Mesh(studProtoMesh.geometry, STUD_PALETTE_MATS[tier]);
-    mesh.scale.setScalar(1.15);
+    mesh.scale.setScalar(sBase);
     const angle = Math.random() * Math.PI * 2;
     const speed = 1.1 + Math.random() * spread;
     mesh.position.set(
@@ -314,6 +337,7 @@ function spawnStudBurst(count = 16, originY = 1.8, spread = 2.6, includePurple =
     scene.add(mesh);
     studParticles.push({
       mesh,
+      baseScale: sBase,
       vel: new THREE.Vector3(Math.cos(angle) * speed, 2.8 + Math.random() * 2.8, Math.sin(angle) * speed),
       rotVel: new THREE.Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8),
       life: 0,
@@ -340,7 +364,7 @@ function updateStudParticles(dt) {
 
     if (p.life > p.maxLife - 0.45) {
       const s = Math.max(0.001, (p.maxLife - p.life) / 0.45);
-      p.mesh.scale.setScalar(1.15 * s);
+      p.mesh.scale.setScalar(p.baseScale * s);
     }
     if (p.life >= p.maxLife) {
       scene.remove(p.mesh);
@@ -382,20 +406,28 @@ function awardStuds(amount) {
   trueBuilderFill.style.width = `${Math.max(12, pct)}%`;
 }
 
-function applyFlowerColor(slotIndex, hex, opts = null) {
+function applyFlowerColor(slotIndex, hex, opts = null, skipDom = false, animatePop = true) {
   activeFlowerHex[slotIndex] = hex;
   const spec = opts || (hex.toUpperCase() === GOLD_COLOR.hex ? GOLD_COLOR : { metallic: 0.02, roughness: 0.34 });
   const meshes = flowerMeshesBySlot[slotIndex] || [];
   meshes.forEach((m) => {
+    // Updating color/metalness/roughness does NOT need shader recompilation (no needsUpdate!)
     m.material.color.set(hex);
     m.material.metalness = spec.metallic ?? 0.02;
     m.material.roughness = spec.roughness ?? 0.34;
-    m.material.needsUpdate = true;
-    // Playful LEGO pop scale pulse on the flower parent node!
-    const target = m.parent || m;
-    gsap.fromTo(target.scale, { x: 1.18, y: 1.18, z: 1.18 }, { x: 1, y: 1, z: 1, duration: 0.32, ease: 'back.out(2.2)' });
+    if (animatePop && m.parent && m.parent.visible) {
+      // Pulse ONLY this individual flower mesh around its quantized base scale!
+      const bs = origScale.get(m);
+      if (bs) {
+        gsap.fromTo(
+          m.scale,
+          { x: bs.x * 1.16, y: bs.y * 1.16, z: bs.z * 1.16 },
+          { x: bs.x, y: bs.y, z: bs.z, duration: 0.3, ease: 'back.out(2.2)', overwrite: 'auto' }
+        );
+      }
+    }
   });
-  refreshFlowerDotButtons();
+  if (!skipDom) refreshFlowerDotButtons();
 }
 
 function applyPalette(paletteKey) {
@@ -406,7 +438,8 @@ function applyPalette(paletteKey) {
   } else {
     cols = PALETTES[paletteKey] || PALETTES.classic;
   }
-  cols.forEach((hex, idx) => applyFlowerColor(idx, hex));
+  cols.forEach((hex, idx) => applyFlowerColor(idx, hex, null, true, true));
+  refreshFlowerDotButtons();
   document.querySelectorAll('.qcb-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.palette === paletteKey);
   });
@@ -458,9 +491,10 @@ function attachXrayContour(mesh, targetList) {
   targetList.push({ lines, mat: edgeMat });
 }
 
+const loaderTextEl = loaderOverlay.querySelector('.loader-text');
 const loader = new GLTFLoader();
 loader.load(
-  'assets/fiori_lego.glb?v=1',
+  'assets/fiori_lego.glb?v=2',
   (gltf) => {
     rootScene = gltf.scene;
     scene.add(rootScene);
@@ -471,6 +505,7 @@ loader.load(
         assembledPos.set(obj.name, obj.position.clone());
       }
       if (obj.isMesh) {
+        origScale.set(obj, obj.scale.clone());
         obj.castShadow = true;
         obj.receiveShadow = true;
         const owner = obj.name || obj.parent?.name || '';
@@ -510,7 +545,12 @@ loader.load(
 
     const studNode = partMap.get('lego_stud_proto');
     if (studNode) {
-      studNode.traverse((c) => { if (c.isMesh) studProtoMesh = c; });
+      studNode.traverse((c) => {
+        if (c.isMesh) {
+          studProtoMesh = c;
+          studBaseScale = c.scale.x || 1.0;
+        }
+      });
       studNode.visible = false;
     }
 
@@ -520,20 +560,26 @@ loader.load(
     if (scaleRefRoot) scaleRefRoot.visible = false;
     if (minikitRoot) minikitRoot.visible = false;
 
-    // Apply initial classic LEGO flower palette
-    PALETTES.classic.forEach((hex, idx) => applyFlowerColor(idx, hex));
+    // Apply initial classic LEGO flower palette (no pop bounce on initial load!)
+    PALETTES.classic.forEach((hex, idx) => applyFlowerColor(idx, hex, null, true, false));
+    refreshFlowerDotButtons();
 
     buildChapterRail();
     setupScrollChoreography();
     setupUIControls();
     setupRaycastInteractions();
 
-    setTimeout(() => loaderOverlay.classList.add('hidden'), 260);
+    setTimeout(() => loaderOverlay.classList.add('hidden'), 180);
   },
-  undefined,
+  (xhr) => {
+    if (xhr.lengthComputable && loaderTextEl) {
+      const pct = Math.min(99, Math.round((xhr.loaded / xhr.total) * 100));
+      loaderTextEl.textContent = `CARICAMENTO MATTONCINI 3D… ${pct}%`;
+    }
+  },
   (err) => {
     console.error('Errore caricamento fiori_lego.glb:', err);
-    loaderOverlay.querySelector('.loader-text').textContent = 'ERRORE CARICAMENTO 3D — AVVIA SERVER LOCALE HTTP';
+    if (loaderTextEl) loaderTextEl.textContent = 'ERRORE CARICAMENTO 3D — AVVIA SERVER LOCALE HTTP';
   }
 );
 
@@ -596,6 +642,8 @@ function applyPartTransform(name, buildT, scatterMap, explodeMap, explodeAmt, ho
 }
 
 function updateXrayShader(amount) {
+  if (Math.abs(amount - lastXrayAmt) < 0.0005) return;
+  lastXrayAmt = amount;
   const isTranslucent = amount > 0.02;
   const opacity = THREE.MathUtils.lerp(1.0, 0.16, amount);
 
@@ -639,45 +687,49 @@ function updateSceneFromState(elapsed) {
     }
   }
 
-  // Apply V1 Transforms (with staggered brick-by-brick build!)
-  if (state.activeVar === 'v1') {
-    applyPartTransform('v1_quattro', state.bCore, SCATTER_V1, EXPLODE_V1, state.explode, 0.75);
+  // Dirty-check part transforms so static frames skip redundant math across 15 meshes!
+  const sig = `${state.activeVar}|${state.bCore.toFixed(4)}|${state.bAdapters.toFixed(4)}|${state.bWalls.toFixed(4)}|${state.bStalks.toFixed(4)}|${state.bFlowers.toFixed(4)}|${state.bV2.toFixed(4)}|${state.bV3.toFixed(4)}|${state.explode.toFixed(4)}`;
+  if (sig !== lastTransformSig) {
+    lastTransformSig = sig;
+    if (state.activeVar === 'v1') {
+      applyPartTransform('v1_quattro', state.bCore, SCATTER_V1, EXPLODE_V1, state.explode, 0.75);
 
-    const tDot = Math.min(1, state.bAdapters * 1.65);
-    const tDotFl = Math.max(0, Math.min(1, (state.bAdapters - 0.35) / 0.65));
-    applyPartTransform('v1_dot', tDot, SCATTER_V1, EXPLODE_V1, state.explode, 0.9);
-    applyPartTransform('v1_dot_fl', tDotFl, SCATTER_V1, EXPLODE_V1, state.explode, 1.05);
+      const tDot = Math.min(1, state.bAdapters * 1.65);
+      const tDotFl = Math.max(0, Math.min(1, (state.bAdapters - 0.35) / 0.65));
+      applyPartTransform('v1_dot', tDot, SCATTER_V1, EXPLODE_V1, state.explode, 0.9);
+      applyPartTransform('v1_dot_fl', tDotFl, SCATTER_V1, EXPLODE_V1, state.explode, 1.05);
 
-    ['v1_lastra_s', 'v1_lastra_e', 'v1_lastra_n', 'v1_lastra_w'].forEach((wn, i) => {
-      const tw = Math.max(0, Math.min(1, (state.bWalls - i * 0.14) / 0.58));
-      applyPartTransform(wn, tw, SCATTER_V1, EXPLODE_V1, state.explode, 0.78);
-    });
+      ['v1_lastra_s', 'v1_lastra_e', 'v1_lastra_n', 'v1_lastra_w'].forEach((wn, i) => {
+        const tw = Math.max(0, Math.min(1, (state.bWalls - i * 0.14) / 0.58));
+        applyPartTransform(wn, tw, SCATTER_V1, EXPLODE_V1, state.explode, 0.78);
+      });
 
-    const tStalk1 = Math.min(1, state.bStalks * 1.6);
-    const tStalk2 = Math.max(0, Math.min(1, (state.bStalks - 0.38) / 0.62));
-    applyPartTransform('v1_pianta_low', tStalk1, SCATTER_V1, EXPLODE_V1, state.explode, 1.1);
-    applyPartTransform('v1_pianta_high', tStalk2, SCATTER_V1, EXPLODE_V1, state.explode, 1.25);
+      const tStalk1 = Math.min(1, state.bStalks * 1.6);
+      const tStalk2 = Math.max(0, Math.min(1, (state.bStalks - 0.38) / 0.62));
+      applyPartTransform('v1_pianta_low', tStalk1, SCATTER_V1, EXPLODE_V1, state.explode, 1.1);
+      applyPartTransform('v1_pianta_high', tStalk2, SCATTER_V1, EXPLODE_V1, state.explode, 1.25);
 
-    ['v1_fiore_1', 'v1_fiore_2', 'v1_fiore_3', 'v1_fiore_4', 'v1_fiore_5', 'v1_fiore_6'].forEach((fn, i) => {
-      const tf = Math.max(0, Math.min(1, (state.bFlowers - i * 0.11) / 0.45));
-      applyPartTransform(fn, tf, SCATTER_V1, EXPLODE_V1, state.explode, 1.15);
-    });
-  } else if (state.activeVar === 'v2') {
-    const tVaso = Math.min(1, state.bV2 * 2.2);
-    const tStalk = Math.max(0, Math.min(1, (state.bV2 - 0.25) / 0.42));
-    applyPartTransform('v2_vaso', tVaso, SCATTER_V2, EXPLODE_V2, state.explode, 0.65);
-    applyPartTransform('v2_pianta', tStalk, SCATTER_V2, EXPLODE_V2, state.explode, 0.95);
-    ['v2_fiore_1', 'v2_fiore_2', 'v2_fiore_3'].forEach((fn, i) => {
-      const tf = Math.max(0, Math.min(1, (state.bV2 - 0.52 - i * 0.12) / 0.24));
-      applyPartTransform(fn, tf, SCATTER_V2, EXPLODE_V2, state.explode, 1.0);
-    });
-  } else if (state.activeVar === 'v3') {
-    const tStalk = Math.min(1, state.bV3 * 2.0);
-    applyPartTransform('v3_pianta', tStalk, SCATTER_V3, EXPLODE_V3, state.explode, 0.6);
-    ['v3_fiore_1', 'v3_fiore_2', 'v3_fiore_3'].forEach((fn, i) => {
-      const tf = Math.max(0, Math.min(1, (state.bV3 - 0.35 - i * 0.16) / 0.33));
-      applyPartTransform(fn, tf, SCATTER_V3, EXPLODE_V3, state.explode, 0.95);
-    });
+      ['v1_fiore_1', 'v1_fiore_2', 'v1_fiore_3', 'v1_fiore_4', 'v1_fiore_5', 'v1_fiore_6'].forEach((fn, i) => {
+        const tf = Math.max(0, Math.min(1, (state.bFlowers - i * 0.11) / 0.45));
+        applyPartTransform(fn, tf, SCATTER_V1, EXPLODE_V1, state.explode, 1.15);
+      });
+    } else if (state.activeVar === 'v2') {
+      const tVaso = Math.min(1, state.bV2 * 2.2);
+      const tStalk = Math.max(0, Math.min(1, (state.bV2 - 0.25) / 0.42));
+      applyPartTransform('v2_vaso', tVaso, SCATTER_V2, EXPLODE_V2, state.explode, 0.65);
+      applyPartTransform('v2_pianta', tStalk, SCATTER_V2, EXPLODE_V2, state.explode, 0.95);
+      ['v2_fiore_1', 'v2_fiore_2', 'v2_fiore_3'].forEach((fn, i) => {
+        const tf = Math.max(0, Math.min(1, (state.bV2 - 0.52 - i * 0.12) / 0.24));
+        applyPartTransform(fn, tf, SCATTER_V2, EXPLODE_V2, state.explode, 1.0);
+      });
+    } else if (state.activeVar === 'v3') {
+      const tStalk = Math.min(1, state.bV3 * 2.0);
+      applyPartTransform('v3_pianta', tStalk, SCATTER_V3, EXPLODE_V3, state.explode, 0.6);
+      ['v3_fiore_1', 'v3_fiore_2', 'v3_fiore_3'].forEach((fn, i) => {
+        const tf = Math.max(0, Math.min(1, (state.bV3 - 0.35 - i * 0.16) / 0.33));
+        applyPartTransform(fn, tf, SCATTER_V3, EXPLODE_V3, state.explode, 0.95);
+      });
+    }
   }
 
   // X-Ray shader update
@@ -730,8 +782,10 @@ function setActiveChapterUI(chIdx) {
   }
   state.lastSmashChapter = chIdx;
 
-  // Chapter rail dots
+  // Chapter rail dots & topnav active link highlight
   document.querySelectorAll('.rail-dot').forEach((d, idx) => d.classList.toggle('active', idx === chIdx));
+  const navTarget = chIdx === 0 ? '#ch-hero' : chIdx === 1 ? '#ch-smash' : chIdx <= 7 ? '#ch-step1' : chIdx <= 9 ? '#ch-var2' : '#ch-freeplay';
+  document.querySelectorAll('.topnav a').forEach((a) => a.classList.toggle('active', a.getAttribute('href') === navTarget));
 
   // Build HUD top pill
   const hud = CHAPTER_HUD[chIdx];
@@ -752,6 +806,11 @@ function setActiveChapterUI(chIdx) {
 
   if (isFree) {
     state.manualOverride = true;
+    if (pendingFreePlayVar) {
+      const pv = pendingFreePlayVar;
+      pendingFreePlayVar = null;
+      switchVariation(pv, true);
+    }
     syncInspectorUI();
   } else {
     state.manualOverride = false;
@@ -871,14 +930,18 @@ function setupScrollChoreography() {
       trigger: belowFold,
       start: 'top 82%',
       onEnter: () => {
+        stageFadedOut = true;
         stageWrap.classList.add('faded-out');
         inspectorDock.classList.remove('visible');
         quickColorBar.classList.add('hide-bar');
         buildHud.classList.add('hidden');
+        document.querySelectorAll('.topnav a').forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#galleria'));
       },
       onLeaveBack: () => {
+        stageFadedOut = false;
         stageWrap.classList.remove('faded-out');
         setActiveChapterUI(state.activeChapter);
+        ensureRenderLoop();
       },
     });
   }
@@ -911,20 +974,32 @@ function buildChapterRail() {
 function switchVariation(vKey, animateCamera = true) {
   if (state.activeVar === vKey && !animateCamera) return;
   state.activeVar = vKey;
+  lastTransformSig = '';
   document.querySelectorAll('#var-selector .seg-btn').forEach((b) => {
     b.classList.toggle('active', b.dataset.var === vKey);
   });
+  if (btnXray) {
+    const canXray = vKey === 'v1';
+    btnXray.disabled = !canXray;
+    if (!canXray) {
+      state.xray = 0;
+      btnXray.setAttribute('aria-pressed', 'false');
+      btnXray.classList.remove('active');
+    }
+  }
   refreshFlowerDotButtons();
 
   if (animateCamera) {
     const ty = vKey === 'v1' ? 1.95 : (vKey === 'v2' ? 1.35 : 0.95);
     const dist = vKey === 'v1' ? 7.2 : (vKey === 'v2' ? 5.2 : 4.5);
     gsap.to(controls.target, { x: 0, y: ty, z: 0, duration: 0.65, ease: 'power2.out' });
-    const dir = camera.position.clone().sub(controls.target).normalize();
+    tmpDir.copy(camera.position).sub(controls.target);
+    if (tmpDir.lengthSq() < 1e-4) tmpDir.set(0.4, 0.3, 1.0);
+    tmpDir.normalize();
     gsap.to(camera.position, {
-      x: dir.x * dist,
-      y: Math.max(1.2, ty + dir.y * dist * 0.55),
-      z: dir.z * dist,
+      x: tmpDir.x * dist,
+      y: Math.max(1.2, ty + tmpDir.y * dist * 0.55),
+      z: tmpDir.z * dist,
       duration: 0.65,
       ease: 'power2.out',
     });
@@ -954,6 +1029,7 @@ function syncInspectorUI() {
   valBuild.textContent = `${sliderBuild.value}%`;
   sliderExplode.value = Math.round(state.explode * 100);
   valExplode.textContent = `${sliderExplode.value}%`;
+  btnXray.disabled = state.activeVar !== 'v1';
   btnXray.setAttribute('aria-pressed', String(state.xray > 0.5));
   btnXray.classList.toggle('active', state.xray > 0.5);
   btnScale.setAttribute('aria-pressed', String(state.showScaleRef));
@@ -964,33 +1040,20 @@ function syncInspectorUI() {
 }
 
 function triggerSmashAndRebuild() {
+  if (activeSmashTl) activeSmashTl.kill();
   spawnStudBurst(28, 1.8, 3.0, goldUnlocked);
   awardStuds(500);
   showToast('💥', 'BRICK SMASH!', 'Ricostruzione automatica in corso…');
   const proxy = { v: 1 };
-  gsap.to(proxy, {
-    v: 0,
-    duration: 0.65,
-    ease: 'power3.out',
-    onUpdate: () => {
-      setUnifiedBuild(proxy.v);
-      sliderBuild.value = Math.round(proxy.v * 100);
-      valBuild.textContent = `${sliderBuild.value}%`;
-    },
-    onComplete: () => {
-      gsap.to(proxy, {
-        v: 1,
-        delay: 0.55,
-        duration: 1.9,
-        ease: 'power2.inOut',
-        onUpdate: () => {
-          setUnifiedBuild(proxy.v);
-          sliderBuild.value = Math.round(proxy.v * 100);
-          valBuild.textContent = `${sliderBuild.value}%`;
-        },
-      });
-    },
-  });
+  const updateBuildUI = () => {
+    setUnifiedBuild(proxy.v);
+    sliderBuild.value = Math.round(proxy.v * 100);
+    valBuild.textContent = `${sliderBuild.value}%`;
+  };
+  activeSmashTl = gsap.timeline({ onComplete: () => { activeSmashTl = null; } });
+  activeSmashTl
+    .to(proxy, { v: 0, duration: 0.65, ease: 'power3.out', onUpdate: updateBuildUI })
+    .to(proxy, { v: 1, delay: 0.55, duration: 1.9, ease: 'power2.inOut', onUpdate: updateBuildUI });
 }
 
 function setupUIControls() {
@@ -1057,14 +1120,20 @@ function setupUIControls() {
     switchVariation(state.activeVar, true);
   });
 
-  // Below-the-fold "Esplora in 3D" variation cards -> jump straight to Free Play!
+  // Below-the-fold "Esplora in 3D" variation cards -> jump straight to Free Play (race-free!)
   document.querySelectorAll('.jump-freeplay').forEach((btn) => {
     btn.addEventListener('click', () => {
+      pendingFreePlayVar = btn.dataset.var;
       document.querySelector('#ch-freeplay')?.scrollIntoView({ behavior: 'smooth' });
+      // Fallback if already in Free Play viewport
       setTimeout(() => {
-        setActiveChapterUI(10);
-        switchVariation(btn.dataset.var, true);
-      }, 450);
+        if (pendingFreePlayVar) {
+          const pv = pendingFreePlayVar;
+          pendingFreePlayVar = null;
+          setActiveChapterUI(10);
+          switchVariation(pv, true);
+        }
+      }, 750);
     });
   });
 
@@ -1082,13 +1151,6 @@ function setupUIControls() {
       spawnStudBurst(40, 2.2, 3.6, true);
       applyPalette('rainbow');
       showToast('🏆', 'TRUE BUILDER 100%!', 'Easter Egg scoperto! Pioggia di stud viola + Rainbow!');
-    }
-  });
-
-  // Keyboard shortcut 'B' in Free Play -> Brick Smash!
-  window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'b' && state.activeChapter === 10) {
-      triggerSmashAndRebuild();
     }
   });
 
@@ -1110,6 +1172,15 @@ function setupUIControls() {
   const closeLb = () => { lb.classList.remove('open'); lb.setAttribute('aria-hidden', 'true'); };
   document.getElementById('lightbox-close').addEventListener('click', closeLb);
   lb.addEventListener('click', (e) => { if (e.target === lb) closeLb(); });
+
+  // Keyboard shortcuts: 'B' in Free Play -> Brick Smash; 'Escape' -> close Lightbox
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lb.classList.contains('open')) {
+      closeLb();
+    } else if (e.key.toLowerCase() === 'b' && state.activeChapter === 10 && !stageFadedOut) {
+      triggerSmashAndRebuild();
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1165,27 +1236,54 @@ function setupRaycastInteractions() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 14. MAIN ANIMATION LOOP & RESIZE
+// 14. MAIN ANIMATION LOOP (AUTO-PAUSES WHEN TAB HIDDEN OR STAGE BELOW FOLD!)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const clock = new THREE.Clock();
 let prevTime = 0;
+let rafId = null;
+
+function shouldRender() {
+  return !tabHidden && !stageFadedOut;
+}
+
+function ensureRenderLoop() {
+  if (rafId === null && shouldRender()) {
+    prevTime = clock.getElapsedTime();
+    rafId = requestAnimationFrame(animate);
+  }
+}
 
 function animate() {
-  requestAnimationFrame(animate);
+  if (!shouldRender()) {
+    rafId = null;
+    return;
+  }
+  rafId = requestAnimationFrame(animate);
   const elapsed = clock.getElapsedTime();
   const dt = Math.min(0.05, elapsed - prevTime);
   prevTime = elapsed;
 
   updateSceneFromState(elapsed);
-  updateStudParticles(dt);
+  if (studParticles.length > 0) updateStudParticles(dt);
   renderer.render(scene, camera);
 }
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+document.addEventListener('visibilitychange', () => {
+  tabHidden = document.hidden;
+  if (!tabHidden) ensureRenderLoop();
 });
 
-animate();
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const mobile = window.innerWidth < 768;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }, 100);
+}, { passive: true });
+
+ensureRenderLoop();
